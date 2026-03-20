@@ -1,0 +1,1044 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Vocab Master</title>
+<link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0a12;
+    --surface: #12121e;
+    --card: #1a1a2e;
+    --border: rgba(255,255,255,0.07);
+    --accent: #7c6af7;
+    --accent2: #f76a8c;
+    --green: #3dd68c;
+    --red: #f76a6a;
+    --yellow: #f7c76a;
+    --text: #f0f0ff;
+    --muted: rgba(240,240,255,0.4);
+    --font-th: 'Kanit', sans-serif;
+    --font-en: 'Space Mono', monospace;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: var(--font-th);
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* BG grid */
+  body::before {
+    content: '';
+    position: fixed; inset: 0;
+    background-image:
+      linear-gradient(rgba(124,106,247,0.04) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(124,106,247,0.04) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* NAV */
+  nav {
+    position: sticky; top: 0; z-index: 100;
+    background: rgba(10,10,18,0.85);
+    backdrop-filter: blur(20px);
+    border-bottom: 1px solid var(--border);
+    padding: 0 20px;
+    display: flex; align-items: center; gap: 0;
+    height: 56px;
+  }
+  .nav-logo {
+    font-family: var(--font-en);
+    font-weight: 700;
+    font-size: 16px;
+    color: var(--accent);
+    margin-right: auto;
+    letter-spacing: -1px;
+  }
+  .nav-logo span { color: var(--accent2); }
+  .nav-tab {
+    height: 56px;
+    padding: 0 18px;
+    background: none; border: none;
+    color: var(--muted); cursor: pointer;
+    font-family: var(--font-th); font-size: 14px;
+    font-weight: 400;
+    border-bottom: 2px solid transparent;
+    transition: all 0.2s;
+    display: flex; align-items: center; gap: 6px;
+  }
+  .nav-tab.active { color: var(--text); border-bottom-color: var(--accent); }
+  .nav-tab:hover { color: var(--text); }
+
+  /* PAGES */
+  .page { display: none; position: relative; z-index: 1; }
+  .page.active { display: block; }
+
+  /* ===== QUIZ PAGE ===== */
+  .quiz-wrap {
+    min-height: calc(100vh - 56px);
+    display: flex; flex-direction: column; align-items: center;
+    justify-content: center; padding: 20px;
+    gap: 20px;
+  }
+
+  .streak-bar {
+    display: flex; align-items: center; gap: 8px;
+    font-size: 13px; color: var(--muted);
+  }
+  .streak-fire { font-size: 20px; animation: pulse 1s infinite; }
+  @keyframes pulse { 0%,100%{transform:scale(1)} 50%{transform:scale(1.2)} }
+  .streak-count { font-family: var(--font-en); font-size: 24px; font-weight: 700; color: var(--yellow); }
+
+  .quiz-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 24px;
+    padding: 36px 28px;
+    max-width: 480px; width: 100%;
+    position: relative; overflow: hidden;
+  }
+  .quiz-card::before {
+    content: '';
+    position: absolute; top: 0; left: 0; right: 0; height: 3px;
+    background: linear-gradient(90deg, var(--accent), var(--accent2));
+  }
+
+  .chapter-badge {
+    display: inline-flex; align-items: center; gap: 4px;
+    background: rgba(124,106,247,0.15);
+    border: 1px solid rgba(124,106,247,0.3);
+    border-radius: 20px; padding: 4px 12px;
+    font-size: 11px; color: var(--accent);
+    font-family: var(--font-en);
+    margin-bottom: 20px;
+  }
+
+  .word-display {
+    font-family: var(--font-en);
+    font-size: 36px; font-weight: 700;
+    color: var(--text);
+    margin-bottom: 8px;
+    letter-spacing: -1px;
+    min-height: 50px;
+  }
+
+  .pos-tag {
+    font-size: 12px; color: var(--muted);
+    margin-bottom: 28px;
+  }
+
+  .choices-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+
+  .choice-btn {
+    background: rgba(255,255,255,0.04);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 14px 12px;
+    color: var(--text);
+    font-family: var(--font-th); font-size: 14px;
+    cursor: pointer;
+    transition: all 0.15s;
+    text-align: center;
+    line-height: 1.4;
+  }
+  .choice-btn:hover:not(:disabled) {
+    background: rgba(124,106,247,0.12);
+    border-color: rgba(124,106,247,0.4);
+    transform: translateY(-1px);
+  }
+  .choice-btn.correct {
+    background: rgba(61,214,140,0.15);
+    border-color: var(--green);
+    color: var(--green);
+    animation: popIn 0.3s ease;
+  }
+  .choice-btn.wrong {
+    background: rgba(247,106,106,0.15);
+    border-color: var(--red);
+    color: var(--red);
+    animation: shake 0.4s ease;
+  }
+  @keyframes popIn {
+    0%{transform:scale(0.95)} 50%{transform:scale(1.03)} 100%{transform:scale(1)}
+  }
+  @keyframes shake {
+    0%,100%{transform:translateX(0)} 25%{transform:translateX(-6px)} 75%{transform:translateX(6px)}
+  }
+
+  .result-row {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-top: 20px; min-height: 28px;
+  }
+  .result-text { font-size: 14px; font-weight: 600; }
+  .result-text.ok { color: var(--green); }
+  .result-text.no { color: var(--red); }
+
+  .next-btn {
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    border: none; border-radius: 10px;
+    padding: 8px 20px;
+    color: white; font-family: var(--font-th); font-size: 14px; font-weight: 600;
+    cursor: pointer;
+    transition: opacity 0.2s, transform 0.1s;
+  }
+  .next-btn:hover { opacity: 0.85; transform: scale(1.02); }
+  .next-btn:active { transform: scale(0.98); }
+
+  /* Scoreboard mini */
+  .score-pills {
+    display: flex; gap: 10px;
+    max-width: 480px; width: 100%;
+  }
+  .pill {
+    flex: 1;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 12px 16px;
+    text-align: center;
+  }
+  .pill-num {
+    font-family: var(--font-en); font-size: 24px; font-weight: 700;
+    display: block;
+  }
+  .pill-label { font-size: 11px; color: var(--muted); margin-top: 2px; }
+  .pill-num.green { color: var(--green); }
+  .pill-num.red { color: var(--red); }
+  .pill-num.yellow { color: var(--yellow); }
+
+  /* ===== STATS PAGE ===== */
+  .stats-wrap {
+    max-width: 600px; margin: 0 auto; padding: 30px 20px;
+  }
+  .page-title {
+    font-size: 22px; font-weight: 700; margin-bottom: 24px;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .stats-grid {
+    display: grid; grid-template-columns: repeat(3,1fr); gap: 12px;
+    margin-bottom: 28px;
+  }
+  .stat-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 16px; padding: 20px 16px;
+    text-align: center;
+  }
+  .stat-num {
+    font-family: var(--font-en); font-size: 32px; font-weight: 700;
+    display: block; margin-bottom: 4px;
+  }
+  .stat-label { font-size: 12px; color: var(--muted); }
+
+  /* Chart */
+  .chart-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 16px; padding: 20px;
+    margin-bottom: 20px;
+  }
+  .chart-title { font-size: 14px; font-weight: 600; margin-bottom: 16px; color: var(--muted); }
+  .bar-chart { display: flex; align-items: flex-end; gap: 6px; height: 120px; }
+  .bar-col { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 4px; }
+  .bar-fill {
+    width: 100%; border-radius: 6px 6px 0 0;
+    background: var(--accent); transition: height 0.5s ease;
+    min-height: 4px;
+  }
+  .bar-label { font-size: 10px; color: var(--muted); }
+
+  /* Weak words */
+  .section-title { font-size: 14px; font-weight: 600; color: var(--muted); margin-bottom: 12px; text-transform: uppercase; letter-spacing: 1px; }
+  .weak-list { display: flex; flex-wrap: wrap; gap: 8px; }
+  .weak-tag {
+    background: rgba(247,106,110,0.12);
+    border: 1px solid rgba(247,106,110,0.3);
+    border-radius: 20px; padding: 4px 12px;
+    font-size: 12px; font-family: var(--font-en);
+    color: var(--red);
+  }
+  .accuracy-bar-wrap { margin-bottom: 20px; }
+  .accuracy-row {
+    display: flex; align-items: center; gap: 10px;
+    margin-bottom: 8px;
+  }
+  .accuracy-label { font-size: 13px; width: 100px; flex-shrink: 0; }
+  .accuracy-track {
+    flex: 1; height: 8px; background: rgba(255,255,255,0.06);
+    border-radius: 4px; overflow: hidden;
+  }
+  .accuracy-fill {
+    height: 100%; border-radius: 4px;
+    background: linear-gradient(90deg, var(--accent), var(--green));
+    transition: width 0.5s ease;
+  }
+  .accuracy-pct { font-size: 12px; font-family: var(--font-en); color: var(--muted); width: 36px; text-align: right; }
+
+  /* ===== VOCAB MANAGER ===== */
+  .vocab-wrap {
+    max-width: 700px; margin: 0 auto; padding: 30px 20px;
+  }
+  .chapter-tabs {
+    display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 24px;
+  }
+  .ch-tab {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 20px; padding: 6px 16px;
+    font-family: var(--font-th); font-size: 13px; color: var(--muted);
+    cursor: pointer; transition: all 0.15s;
+    display: flex; align-items: center; gap: 6px;
+  }
+  .ch-tab input[type=checkbox] { accent-color: var(--accent); width: 14px; height: 14px; }
+  .ch-tab.selected { border-color: var(--accent); color: var(--text); background: rgba(124,106,247,0.12); }
+
+  .add-form {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 16px; padding: 20px;
+    margin-bottom: 24px;
+  }
+  .add-form h3 { font-size: 14px; color: var(--muted); margin-bottom: 14px; }
+  .form-row { display: flex; gap: 10px; flex-wrap: wrap; }
+  .form-input {
+    flex: 1; min-width: 140px;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid var(--border);
+    border-radius: 10px; padding: 10px 14px;
+    color: var(--text); font-family: var(--font-th); font-size: 14px;
+    outline: none; transition: border-color 0.2s;
+  }
+  .form-input:focus { border-color: var(--accent); }
+  .form-input::placeholder { color: var(--muted); }
+  .add-btn {
+    background: var(--accent); border: none; border-radius: 10px;
+    padding: 10px 20px; color: white;
+    font-family: var(--font-th); font-size: 14px; font-weight: 600;
+    cursor: pointer; transition: opacity 0.2s;
+  }
+  .add-btn:hover { opacity: 0.85; }
+
+  .vocab-table { width: 100%; border-collapse: collapse; }
+  .vocab-table th {
+    text-align: left; font-size: 11px; color: var(--muted);
+    text-transform: uppercase; letter-spacing: 1px;
+    padding: 8px 12px; border-bottom: 1px solid var(--border);
+  }
+  .vocab-table td {
+    padding: 10px 12px; border-bottom: 1px solid var(--border);
+    font-size: 14px;
+  }
+  .vocab-table tr:hover td { background: rgba(255,255,255,0.02); }
+  .vocab-table .en { font-family: var(--font-en); font-size: 13px; }
+  .del-btn {
+    background: none; border: none; color: var(--muted);
+    cursor: pointer; font-size: 16px; padding: 2px 6px;
+    border-radius: 6px; transition: all 0.15s;
+  }
+  .del-btn:hover { color: var(--red); background: rgba(247,106,106,0.1); }
+  .custom-badge {
+    background: rgba(247,199,106,0.15); border: 1px solid rgba(247,199,106,0.3);
+    border-radius: 10px; padding: 2px 8px; font-size: 10px; color: var(--yellow);
+  }
+
+  .empty-state {
+    text-align: center; padding: 40px; color: var(--muted); font-size: 14px;
+  }
+
+  /* Floating answer hint card */
+  .hint-card {
+    position: fixed; bottom: 20px; right: 20px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 14px; padding: 14px 18px;
+    font-size: 13px; color: var(--text);
+    z-index: 200; display: none;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+    animation: slideUp 0.2s ease;
+  }
+  @keyframes slideUp {
+    from{transform:translateY(10px);opacity:0} to{transform:translateY(0);opacity:1}
+  }
+  .hint-word { font-family: var(--font-en); font-weight: 700; font-size: 16px; color: var(--accent); }
+  .hint-ans { color: var(--green); margin-top: 2px; }
+
+  /* Responsive */
+  @media(max-width: 400px) {
+    .word-display { font-size: 26px; }
+    .choices-grid { grid-template-columns: 1fr; }
+    .stats-grid { grid-template-columns: repeat(2,1fr); }
+  }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-logo">VOCAB<span>MASTER</span></div>
+  <button class="nav-tab active" onclick="showPage('quiz',this)">🎯 ทำข้อสอบ</button>
+  <button class="nav-tab" onclick="showPage('stats',this)">📊 สถิติ</button>
+  <button class="nav-tab" onclick="showPage('manage',this)">⚙️ จัดการ</button>
+</nav>
+
+<!-- ======= QUIZ PAGE ======= -->
+<div id="page-quiz" class="page active">
+  <div class="quiz-wrap">
+    <div class="streak-bar">
+      <span class="streak-fire">🔥</span>
+      <span class="streak-count" id="streak-num">0</span>
+      <span>ตอบถูกติดกัน</span>
+    </div>
+
+    <div class="score-pills">
+      <div class="pill">
+        <span class="pill-num green" id="score-correct">0</span>
+        <div class="pill-label">ถูก</div>
+      </div>
+      <div class="pill">
+        <span class="pill-num red" id="score-wrong">0</span>
+        <div class="pill-label">ผิด</div>
+      </div>
+      <div class="pill">
+        <span class="pill-num yellow" id="score-acc">-</span>
+        <div class="pill-label">แม่นยำ</div>
+      </div>
+      <div class="pill">
+        <span class="pill-num" id="score-total" style="color:var(--accent)">0</span>
+        <div class="pill-label">ทั้งหมด</div>
+      </div>
+    </div>
+
+    <div class="quiz-card" id="quiz-card">
+      <div class="chapter-badge" id="ch-badge">📚 Chapter —</div>
+      <div class="word-display" id="word-display">Loading...</div>
+      <div class="pos-tag" id="pos-tag"></div>
+      <div class="choices-grid" id="choices-grid"></div>
+      <div class="result-row">
+        <div class="result-text" id="result-text"></div>
+        <button class="next-btn" id="next-btn" onclick="nextQuestion()">ต่อไป →</button>
+      </div>
+    </div>
+
+    <div style="font-size:12px;color:var(--muted)">แตะ [Space] หรือ [Enter] เพื่อข้ามข้อ</div>
+  </div>
+</div>
+
+<!-- ======= STATS PAGE ======= -->
+<div id="page-stats" class="page">
+  <div class="stats-wrap">
+    <div class="page-title">📊 สถิติการเรียน</div>
+
+    <div class="stats-grid">
+      <div class="stat-card">
+        <span class="stat-num" id="stat-total" style="color:var(--accent)">0</span>
+        <div class="stat-label">ทำทั้งหมด</div>
+      </div>
+      <div class="stat-card">
+        <span class="stat-num green" id="stat-correct" style="color:var(--green)">0</span>
+        <div class="stat-label">ถูกทั้งหมด</div>
+      </div>
+      <div class="stat-card">
+        <span class="stat-num" id="stat-streak" style="color:var(--yellow)">0</span>
+        <div class="stat-label">Streak สูงสุด</div>
+      </div>
+    </div>
+
+    <div class="chart-card">
+      <div class="chart-title">ความแม่นยำต่อ Chapter</div>
+      <div id="chapter-accuracy"></div>
+    </div>
+
+    <div class="chart-card">
+      <div class="chart-title">ผลล่าสุด 20 ข้อ</div>
+      <div id="history-chart" style="display:flex;gap:4px;align-items:center;height:40px;"></div>
+    </div>
+
+    <div class="chart-card">
+      <div class="section-title">คำที่ตอบผิดบ่อย 🔴</div>
+      <div class="weak-list" id="weak-list">
+        <div class="empty-state">ยังไม่มีข้อมูล</div>
+      </div>
+    </div>
+
+    <button onclick="resetStats()" style="margin-top:12px;background:rgba(247,106,106,0.15);border:1px solid rgba(247,106,106,0.3);border-radius:10px;padding:10px 20px;color:var(--red);font-family:var(--font-th);font-size:14px;cursor:pointer;width:100%">🗑️ รีเซ็ตสถิติ</button>
+  </div>
+</div>
+
+<!-- ======= MANAGE PAGE ======= -->
+<div id="page-manage" class="page">
+  <div class="vocab-wrap">
+    <div class="page-title">⚙️ จัดการ Vocab</div>
+
+    <div class="chart-card">
+      <div class="section-title">เลือก Chapter ที่จะออกข้อสอบ</div>
+      <div class="chapter-tabs" id="chapter-tabs"></div>
+      <button onclick="applyChapterFilter()" class="add-btn" style="margin-top:8px">✅ บันทึกการเลือก</button>
+    </div>
+
+    <div class="add-form">
+      <h3>➕ เพิ่มคำศัพท์ใหม่</h3>
+      <div class="form-row">
+        <input class="form-input" id="inp-word" placeholder="คำศัพท์ (EN)" />
+        <input class="form-input" id="inp-ans" placeholder="ความหมาย (TH)" />
+        <input class="form-input" id="inp-ch" placeholder="Chapter (เช่น 8)" style="max-width:120px" />
+        <button class="add-btn" onclick="addWord()">เพิ่ม</button>
+      </div>
+    </div>
+
+    <div class="chart-card">
+      <div class="section-title">คำศัพท์ทั้งหมด (<span id="vocab-count">0</span> คำ)</div>
+      <input class="form-input" id="search-vocab" placeholder="🔍 ค้นหา..." style="margin-bottom:12px;width:100%" oninput="renderVocabTable()" />
+      <table class="vocab-table">
+        <thead><tr><th>คำศัพท์</th><th>ความหมาย</th><th>Chapter</th><th></th></tr></thead>
+        <tbody id="vocab-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<div class="hint-card" id="hint-card">
+  <div class="hint-word" id="hint-word"></div>
+  <div class="hint-ans" id="hint-ans"></div>
+</div>
+
+<script>
+// ============================================================
+//  DATA
+// ============================================================
+const baseVocab = [
+  {word:"think tank",answer:"มันสมอง, องค์กรวิจัย",chapter:1},
+  {word:"appearance",answer:"การปรากฏขึ้น",chapter:1},
+  {word:"extracted",answer:"สกัดออกมา",chapter:1},
+  {word:"survive",answer:"อยู่รอด",chapter:1},
+  {word:"combination",answer:"การผสมผสาน",chapter:1},
+  {word:"doubts",answer:"สงสัย",chapter:1},
+  {word:"released",answer:"ปล่อยออกมา",chapter:1},
+  {word:"creatures",answer:"สิ่งมีชีวิต",chapter:1},
+  {word:"valid",answer:"น่าเชื่อถือ",chapter:1},
+  {word:"accepted",answer:"ได้รับการยอมรับ",chapter:1},
+  {word:"experience",answer:"ประสบการณ์",chapter:1},
+  {word:"athletic",answer:"แข็งแรงแบบนักกีฬา",chapter:1},
+  {word:"daring",answer:"กล้าท้าทาย",chapter:1},
+  {word:"doubt",answer:"ไม่มั่นใจ",chapter:1},
+  {word:"bunch",answer:"กลุ่ม",chapter:1},
+  {word:"stuck",answer:"ติดอยู่",chapter:1},
+  {word:"grumbler",answer:"คนขี้บ่น",chapter:1},
+  {word:"heavenly",answer:"วิเศษเหนือสวรรค์",chapter:1},
+  {word:"charming",answer:"น่าหลงใหล",chapter:1},
+  {word:"envious",answer:"อิจฉา",chapter:1},
+  {word:"novice",answer:"มือใหม่",chapter:1},
+
+  {word:"hermit",answer:"ฤาษี",chapter:2},
+  {word:"chapel",answer:"โบสถ์",chapter:2},
+  {word:"applicant",answer:"ผู้สมัคร",chapter:2},
+  {word:"glacier",answer:"ธารน้ำแข็ง",chapter:2},
+  {word:"fetch",answer:"ไปเอามา",chapter:2},
+  {word:"inconvenience",answer:"ไม่สะดวกสบาย",chapter:2},
+  {word:"immediately",answer:"ทันที",chapter:2},
+  {word:"seclusion",answer:"ความสันโดษ",chapter:2},
+  {word:"prepare",answer:"เตรียมตัว",chapter:2},
+  {word:"separate",answer:"แยกจาก",chapter:2},
+  {word:"dropped off",answer:"นำไปส่ง",chapter:2},
+  {word:"hit the streets",answer:"ออกไปเดินเที่ยวในเมือง",chapter:2},
+  {word:"predict",answer:"ทำนาย",chapter:2},
+  {word:"disappearing",answer:"ที่หายไป",chapter:2},
+  {word:"limited",answer:"จำกัด",chapter:2},
+  {word:"refund",answer:"เงินคืน",chapter:2},
+  {word:"handle",answer:"จัดการ",chapter:2},
+  {word:"imagine",answer:"จินตนาการ",chapter:2},
+  {word:"exhausting",answer:"เหนื่อยล้า",chapter:2},
+  {word:"jam-packed",answer:"อัดแน่น",chapter:2},
+
+  {word:"cruising",answer:"การแล่นเรือ",chapter:3},
+  {word:"breathtaking",answer:"น่าทึ่ง, งดงาม",chapter:3},
+  {word:"spot",answer:"จุด",chapter:3},
+  {word:"intended",answer:"ตั้งใจ",chapter:3},
+  {word:"intense",answer:"เข้มข้น",chapter:3},
+  {word:"harbor",answer:"ท่าเรือ",chapter:3},
+  {word:"howling",answer:"เห่าหอน",chapter:3},
+  {word:"uninterrupted",answer:"ต่อเนื่อง",chapter:3},
+  {word:"rolling",answer:"ที่กลิ้ง, ที่ม้วน",chapter:3},
+  {word:"phenomenal",answer:"มหัศจรรย์",chapter:3},
+  {word:"shelter",answer:"ที่กำบัง",chapter:3},
+  {word:"fatal",answer:"ร้ายแรง",chapter:3},
+  {word:"crouching down",answer:"หมอบลง",chapter:3},
+  {word:"curling",answer:"งอตัว, ม้วนตัว",chapter:3},
+  {word:"depression",answer:"ที่ลุ่ม",chapter:3},
+  {word:"atenna",answer:"เสาอากาศ",chapter:3},
+  {word:"inadvisable",answer:"ไม่แนะนำ",chapter:3},
+  {word:"conduct",answer:"เหนี่ยวนำ",chapter:3},
+  {word:"lightning",answer:"ฟ้าแลบ",chapter:3},
+
+  {word:"rear-end-collision",answer:"การชนท้ายรถคันอื่น",chapter:4},
+  {word:"side-on collision",answer:"การชนด้านข้าง",chapter:4},
+  {word:"reckless",answer:"ประมาท",chapter:4},
+  {word:"overtake",answer:"แซง",chapter:4},
+  {word:"skid",answer:"ลื่น",chapter:4},
+  {word:"head-on collision",answer:"ชนกันด้านหน้า",chapter:4},
+  {word:"pile-up",answer:"อุบัติเหตุหลายคัน",chapter:4},
+  {word:"totaled",answer:"พัง",chapter:4},
+  {word:"high-end",answer:"อย่างดี",chapter:4},
+  {word:"wide-legged jeans",answer:"กางเกงทรงหลวม",chapter:4},
+  {word:"sideswipe",answer:"เฉี่ยว",chapter:4},
+  {word:"plough into",answer:"กระแทก",chapter:4},
+  {word:"slam on",answer:"รีบเยียบ",chapter:4},
+  {word:"spun",answer:"หมุน",chapter:4},
+  {word:"flared jeans",answer:"กางเกงยีนส์ขาม้า",chapter:4},
+  {word:"bootcut jeans",answer:"กางเกงยีนส์คล้ายขาม้า",chapter:4},
+
+  {word:"effects",answer:"ผล",chapter:5},
+  {word:"obvious",answer:"ชัดเจน",chapter:5},
+  {word:"anxiety",answer:"วิตกกังวล",chapter:5},
+  {word:"gain",answer:"ได้รับ",chapter:5},
+  {word:"pretend",answer:"แสร้งทำ",chapter:5},
+  {word:"spread",answer:"แพร่กระจาย",chapter:5},
+  {word:"diet",answer:"อาหาร",chapter:5},
+  {word:"healthy",answer:"แข็งแรง",chapter:5},
+  {word:"achieve",answer:"ทำสำเร็จ",chapter:5},
+  {word:"goal",answer:"เป้าหมาย",chapter:5},
+  {word:"stress",answer:"ความเครียด",chapter:5},
+  {word:"reduce",answer:"ลดลง",chapter:5},
+  {word:"put down",answer:"วางลง",chapter:5},
+  {word:"reply",answer:"ตอบ",chapter:5},
+  {word:"addiction",answer:"การเสพติด",chapter:5},
+  {word:"rule",answer:"กฎ",chapter:5},
+  {word:"essential",answer:"จำเป็น, สำคัญ",chapter:5},
+  {word:"release",answer:"ปล่อย, ปลดปล่อย",chapter:5},
+  {word:"drawback",answer:"ข้อเสีย, จุดด้อย",chapter:5},
+  {word:"obsess",answer:"หมกมุ่น",chapter:5},
+
+  {word:"favorite",answer:"ที่ชื่นชอบ",chapter:6},
+  {word:"arrive",answer:"มาถึง",chapter:6},
+  {word:"excited",answer:"ตื่นเต้น",chapter:6},
+  {word:"argue",answer:"โต้เถียง",chapter:6},
+  {word:"tough",answer:"ยาก",chapter:6},
+  {word:"meal",answer:"มื้ออาหาร",chapter:6},
+  {word:"tasty",answer:"อร่อย",chapter:6},
+  {word:"notice",answer:"สังเกต",chapter:6},
+  {word:"normal",answer:"ปกติ",chapter:6},
+  {word:"perform",answer:"แสดง",chapter:6},
+  {word:"energy",answer:"พลังงาน",chapter:6},
+  {word:"stadium",answer:"สนามกีฬา",chapter:6},
+  {word:"circus",answer:"คณะละครสัตว์",chapter:6},
+  {word:"look after",answer:"ดูแล",chapter:6},
+  {word:"juggle",answer:"เล่นกล",chapter:6},
+  {word:"highlight",answer:"จุดเด่น",chapter:6},
+  {word:"clown",answer:"ตัวตลก",chapter:6},
+  {word:"popular",answer:"เป็นที่นิยม",chapter:6},
+  {word:"audience",answer:"ผู้ชม, ผู้ฟัง",chapter:6},
+
+  {word:"explore",answer:"สำรวจ",chapter:7},
+  {word:"determine",answer:"กำหนด",chapter:7},
+  {word:"destination",answer:"จุดหมาย",chapter:7},
+  {word:"mention",answer:"กล่าวถึง",chapter:7},
+  {word:"infinite",answer:"ไม่มีที่สิ้นสุด",chapter:7},
+  {word:"make sense",answer:"มีเหตุผล",chapter:7},
+  {word:"worth",answer:"คุ้มค่า",chapter:7},
+  {word:"depends on",answer:"ขึ้นอยู่กับ",chapter:7},
+  {word:"stand out",answer:"โดดเด่น",chapter:7},
+  {word:"aurora borealis",answer:"แสงเหนือ",chapter:7},
+  {word:"hot spring",answer:"น้ำพุร้อน",chapter:7},
+  {word:"hiking",answer:"การเดินป่า",chapter:7},
+  {word:"ridiculous",answer:"น่าขัน, ไร้สาระ",chapter:7},
+  {word:"prove",answer:"พิสูจน์",chapter:7},
+  {word:"give up",answer:"ยอมแพ้",chapter:7},
+  {word:"conspiracy",answer:"การสบคบคิด",chapter:7},
+  {word:"crust",answer:"เปลือก",chapter:7},
+  {word:"spherical",answer:"ทรงกลม",chapter:7},
+  {word:"spinning",answer:"ที่หมุนกำลังหมุน",chapter:7},
+
+  {word:"particle",answer:"ส่วนเล็กๆ",chapter:8},
+  {word:"respiratory",answer:"เกี่ยวกับการหายใจ",chapter:8},
+  {word:"tract",answer:"ทางเดิน (อาหาร/หายใจ)",chapter:8},
+  {word:"exposure",answer:"การเปิดรับ",chapter:8},
+  {word:"irritation",answer:"การระคายเคือง",chapter:8},
+  {word:"condition",answer:"สภาวะ, เงื่อนไข, อาการ",chapter:8},
+  {word:"associate with",answer:"เกี่ยวข้องกับ",chapter:8},
+  {word:"chronic",answer:"เรื้อรัง",chapter:8},
+  {word:"mortality",answer:"อัตราการตาย",chapter:8},
+  {word:"particularly",answer:"โดยเฉพาะ, เป็นพิเศษ",chapter:8},
+  {word:"hurt",answer:"ทำให้เจ็บ",chapter:8},
+  {word:"vessels",answer:"หลอดเลือด",chapter:8},
+  {word:"shrink",answer:"หดตัว, ย่อเล็กลง",chapter:8},
+  {word:"temporarily",answer:"ชั่วคราว",chapter:8},
+  {word:"expand",answer:"ขยาย",chapter:8},
+  {word:"sudden",answer:"กะทันหัน",chapter:8},
+  {word:"signal",answer:"สัญญาณ",chapter:8},
+  {word:"nerve",answer:"เส้นประสาท",chapter:8},
+  {word:"awhile",answer:"สักพัก, ชั่วครู่",chapter:8},
+  {word:"press",answer:"กด, บีบ",chapter:8},
+
+  {word:"convince",answer:"โน้มน้าว",chapter:9},
+  {word:"impressive",answer:"น่าประทับใจ",chapter:9},
+  {word:"essential",answer:"จำเป็น, สำคัญมาก",chapter:9},
+  {word:"promise",answer:"คำสัญญา",chapter:9},
+  {word:"equally",answer:"อย่างเท่าเทียมกัน",chapter:9},
+  {word:"mind-bending",answer:"ทำให้สับสน (แปลกประหลาด)",chapter:9},
+  {word:"alternate",answer:"สลับกัน",chapter:9},
+  {word:"reality",answer:"ความเป็นจริง",chapter:9},
+  {word:"turned out",answer:"กลายเป็นว่า",chapter:9},
+  {word:"broke",answer:"ถังแตก, ไม่มีเงิน",chapter:9},
+  {word:"blink",answer:"กระพริบตา",chapter:9},
+  {word:"regret",answer:"ความเสียใจ",chapter:9},
+  {word:"prison",answer:"เรือนจำ, คุก",chapter:9},
+  {word:"home-repair",answer:"เกี่ยวข้องกับการซ่อมแซมบ้าน",chapter:9},
+  {word:"route",answer:"เส้นทาง",chapter:9},
+  {word:"mentioned",answer:"กล่าวถึง",chapter:9},
+  {word:"vague",answer:"คลุมเครือ, ไม่ชัดเจน",chapter:9},
+  {word:"dependable",answer:"น่าเชื่อถือ, ไว้ใจได้",chapter:9},
+  {word:"logical",answer:"มีเหตุผล",chapter:9},
+  {word:"heartbreak",answer:"อกหัก, เสียใจอย่างรุนแรง",chapter:9},
+
+  {word:"anniversary",answer:"วันครบรอบ",chapter:10},
+  {word:"credit",answer:"ให้เครดิต, ชื่นชม",chapter:10},
+  {word:"came up with",answer:"คิดออก, นึกขึ้นได้",chapter:10},
+  {word:"complete",answer:"ทำให้สมบูรณ์",chapter:10},
+  {word:"fair",answer:"งานแฟร์",chapter:10},
+  {word:"take down",answer:"ถอดลง, จดบันทึก",chapter:10},
+  {word:"structure",answer:"โครงสร้าง, สิ่งก่อสร้าง",chapter:10},
+  {word:"incredibly",answer:"อย่างมาก, อย่างน่าเหลือเชื่อ",chapter:10},
+  {word:"benefit",answer:"ประโยชน์",chapter:10},
+  {word:"be torn down",answer:"ถูกทำลาย, ถูกรื้อ",chapter:10},
+  {word:"moped",answer:"รถมอเตอร์ไซค์พ่วงเครื่องยนต์เล็ก",chapter:10},
+  {word:"accidently",answer:"โดยบังเอิญ, โดยไม่ตั้งใจ",chapter:10},
+  {word:"struck",answer:"ถูกตี, โจมตี",chapter:10},
+  {word:"exactly",answer:"อย่างแม่นยำ, เป๊ะๆ",chapter:10},
+  {word:"very same",answer:"เหมือนกันเป๊ะๆ",chapter:10},
+  {word:"established",answer:"ก่อตั้ง, จัดตั้ง",chapter:10},
+  {word:"in fact",answer:"ในความเป็นจริง",chapter:10},
+  {word:"coincidence",answer:"บังเอิญ",chapter:10},
+  {word:"driven",answer:"ขับ, ถูกขับ",chapter:10},
+  {word:"passenger",answer:"ผู้โดยสาร",chapter:10},
+];
+
+// ============================================================
+//  STATE
+// ============================================================
+let customVocab = JSON.parse(localStorage.getItem('customVocab') || '[]');
+let selectedChapters = JSON.parse(localStorage.getItem('selectedChapters') || 'null');
+let stats = JSON.parse(localStorage.getItem('quizStats') || '{"correct":0,"wrong":0,"streak":0,"maxStreak":0,"history":[],"weakWords":{},"chapterStats":{}}');
+
+let allVocab = () => {
+  const all = [...baseVocab, ...customVocab];
+  if (!selectedChapters) return all;
+  return all.filter(v => selectedChapters.includes(v.chapter));
+};
+
+let score = stats.correct, wrongCount = stats.wrong;
+let streak = 0, maxStreak = stats.maxStreak;
+let answered = false, currentQ = null, lastQ = null;
+
+// ============================================================
+//  AUDIO
+// ============================================================
+const AudioCtx = window.AudioContext || window.webkitAudioContext;
+let audioCtx;
+function getAudio() { if (!audioCtx) audioCtx = new AudioCtx(); return audioCtx; }
+
+function playTone(freq, type, duration, vol = 0.3) {
+  try {
+    const ctx = getAudio();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.connect(gain); gain.connect(ctx.destination);
+    osc.type = type; osc.frequency.value = freq;
+    gain.gain.setValueAtTime(vol, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + duration);
+    osc.start(); osc.stop(ctx.currentTime + duration);
+  } catch(e) {}
+}
+function playCorrect() {
+  playTone(523, 'sine', 0.1);
+  setTimeout(() => playTone(659, 'sine', 0.1), 80);
+  setTimeout(() => playTone(784, 'sine', 0.2), 160);
+}
+function playWrong() {
+  playTone(220, 'sawtooth', 0.15, 0.2);
+  setTimeout(() => playTone(180, 'sawtooth', 0.2, 0.15), 100);
+}
+
+// ============================================================
+//  QUIZ LOGIC
+// ============================================================
+function getActivePool() {
+  const pool = allVocab();
+  if (pool.length === 0) return baseVocab;
+  return pool;
+}
+
+function getQ() {
+  const weak = Object.entries(stats.weakWords)
+    .filter(([,v]) => v >= 2)
+    .map(([k]) => getActivePool().find(q => q.word === k))
+    .filter(Boolean);
+
+  let pool = (Math.random() < 0.35 && weak.length) ? weak : getActivePool();
+  let q;
+  let tries = 0;
+  do { q = pool[Math.floor(Math.random() * pool.length)]; tries++; }
+  while (q === lastQ && tries < 20);
+  lastQ = q;
+  return q;
+}
+
+function getChoices(correct) {
+  const choices = [correct.answer];
+  const pool = getActivePool().map(q => q.answer).filter(a => a !== correct.answer);
+  while (choices.length < 4 && pool.length > 0) {
+    const r = pool.splice(Math.floor(Math.random() * pool.length), 1)[0];
+    if (!choices.includes(r)) choices.push(r);
+  }
+  return choices.sort(() => Math.random() - 0.5);
+}
+
+function loadQuestion() {
+  answered = false;
+  document.getElementById('result-text').textContent = '';
+  currentQ = getQ();
+  if (!currentQ) return;
+
+  document.getElementById('word-display').textContent = currentQ.word;
+  document.getElementById('ch-badge').textContent = `📚 Chapter ${currentQ.chapter || '?'}`;
+
+  const grid = document.getElementById('choices-grid');
+  grid.innerHTML = '';
+  getChoices(currentQ).forEach(c => {
+    const btn = document.createElement('button');
+    btn.className = 'choice-btn';
+    btn.textContent = c;
+    btn.onclick = () => selectAnswer(btn, c);
+    grid.appendChild(btn);
+  });
+}
+
+function selectAnswer(btn, choice) {
+  if (answered) return;
+  answered = true;
+  const correct = choice === currentQ.answer;
+
+  document.querySelectorAll('.choice-btn').forEach(b => {
+    b.disabled = true;
+    if (b.textContent === currentQ.answer) b.classList.add('correct');
+  });
+
+  const rt = document.getElementById('result-text');
+  if (correct) {
+    score++; streak++;
+    if (streak > maxStreak) maxStreak = streak;
+    rt.textContent = '✅ ถูกต้อง!';
+    rt.className = 'result-text ok';
+    playCorrect();
+    stats.correct++;
+    stats.history.push(1);
+    if (stats.weakWords[currentQ.word]) delete stats.weakWords[currentQ.word];
+  } else {
+    btn.classList.add('wrong');
+    wrongCount++; streak = 0;
+    rt.textContent = `❌ ${currentQ.answer}`;
+    rt.className = 'result-text no';
+    playWrong();
+    stats.wrong++;
+    stats.history.push(0);
+    stats.weakWords[currentQ.word] = (stats.weakWords[currentQ.word] || 0) + 1;
+  }
+
+  // Chapter stats
+  const ch = String(currentQ.chapter || '?');
+  if (!stats.chapterStats[ch]) stats.chapterStats[ch] = {c:0,t:0};
+  stats.chapterStats[ch].t++;
+  if (correct) stats.chapterStats[ch].c++;
+
+  if (stats.history.length > 50) stats.history.shift();
+  stats.maxStreak = maxStreak;
+  saveStats();
+  updateScorePills();
+}
+
+function nextQuestion() {
+  loadQuestion();
+}
+
+function updateScorePills() {
+  const total = score + wrongCount;
+  document.getElementById('score-correct').textContent = score;
+  document.getElementById('score-wrong').textContent = wrongCount;
+  document.getElementById('score-acc').textContent = total ? Math.round(score/total*100)+'%' : '-';
+  document.getElementById('score-total').textContent = total;
+  document.getElementById('streak-num').textContent = streak;
+}
+
+function saveStats() {
+  localStorage.setItem('quizStats', JSON.stringify(stats));
+}
+
+// ============================================================
+//  STATS PAGE
+// ============================================================
+function renderStats() {
+  const total = stats.correct + stats.wrong;
+  document.getElementById('stat-total').textContent = total;
+  document.getElementById('stat-correct').textContent = stats.correct;
+  document.getElementById('stat-streak').textContent = stats.maxStreak;
+
+  // Chapter accuracy bars
+  const ca = document.getElementById('chapter-accuracy');
+  const chapters = Object.keys(stats.chapterStats).sort((a,b)=>Number(a)-Number(b));
+  if (chapters.length === 0) { ca.innerHTML = '<div class="empty-state">ยังไม่มีข้อมูล</div>'; }
+  else {
+    ca.innerHTML = chapters.map(ch => {
+      const s = stats.chapterStats[ch];
+      const pct = s.t ? Math.round(s.c/s.t*100) : 0;
+      const color = pct>=80 ? 'var(--green)' : pct>=50 ? 'var(--yellow)' : 'var(--red)';
+      return `<div class="accuracy-row">
+        <div class="accuracy-label">Chapter ${ch}</div>
+        <div class="accuracy-track"><div class="accuracy-fill" style="width:${pct}%;background:${color}"></div></div>
+        <div class="accuracy-pct">${pct}%</div>
+      </div>`;
+    }).join('');
+  }
+
+  // History chart
+  const hc = document.getElementById('history-chart');
+  const hist = stats.history.slice(-20);
+  hc.innerHTML = hist.length ? hist.map(h =>
+    `<div style="width:100%;flex:1;height:${h?'100%':'40%'};background:${h?'var(--green)':'var(--red)'};border-radius:3px;opacity:0.8"></div>`
+  ).join('') : '<div class="empty-state" style="width:100%">ยังไม่มีข้อมูล</div>';
+
+  // Weak words
+  const wl = document.getElementById('weak-list');
+  const weak = Object.entries(stats.weakWords).sort((a,b)=>b[1]-a[1]).slice(0,20);
+  wl.innerHTML = weak.length
+    ? weak.map(([w,c]) => `<div class="weak-tag">${w} <span style="opacity:0.6">(×${c})</span></div>`).join('')
+    : '<div class="empty-state">เยี่ยม! ยังไม่มีคำที่ตอบผิดซ้ำ 🎉</div>';
+}
+
+function resetStats() {
+  if (!confirm('รีเซ็ตสถิติทั้งหมด?')) return;
+  stats = {correct:0,wrong:0,streak:0,maxStreak:0,history:[],weakWords:{},chapterStats:{}};
+  score = 0; wrongCount = 0; streak = 0; maxStreak = 0;
+  saveStats(); updateScorePills(); renderStats();
+}
+
+// ============================================================
+//  MANAGE PAGE
+// ============================================================
+function getChapters() {
+  const all = [...baseVocab, ...customVocab];
+  return [...new Set(all.map(v => v.chapter))].sort((a,b)=>a-b);
+}
+
+function renderChapterTabs() {
+  const tabs = document.getElementById('chapter-tabs');
+  const chapters = getChapters();
+  const sel = selectedChapters || chapters;
+  tabs.innerHTML = chapters.map(ch => {
+    const count = [...baseVocab,...customVocab].filter(v=>v.chapter===ch).length;
+    const checked = sel.includes(ch);
+    return `<label class="ch-tab ${checked?'selected':''}">
+      <input type="checkbox" value="${ch}" ${checked?'checked':''} onchange="toggleChTab(this)">
+      Chapter ${ch} <span style="opacity:0.5;font-size:11px">(${count})</span>
+    </label>`;
+  }).join('');
+}
+
+function toggleChTab(el) {
+  const label = el.closest('.ch-tab');
+  label.classList.toggle('selected', el.checked);
+}
+
+function applyChapterFilter() {
+  const checked = [...document.querySelectorAll('#chapter-tabs input:checked')].map(el => Number(el.value));
+  selectedChapters = checked.length ? checked : null;
+  localStorage.setItem('selectedChapters', JSON.stringify(selectedChapters));
+  alert(`✅ เลือก ${checked.length || 'ทั้งหมด'} Chapter แล้ว`);
+}
+
+function addWord() {
+  const w = document.getElementById('inp-word').value.trim();
+  const a = document.getElementById('inp-ans').value.trim();
+  const c = parseInt(document.getElementById('inp-ch').value) || 99;
+  if (!w || !a) { alert('กรุณากรอกคำศัพท์และความหมาย'); return; }
+  customVocab.push({word:w, answer:a, chapter:c, custom:true});
+  localStorage.setItem('customVocab', JSON.stringify(customVocab));
+  document.getElementById('inp-word').value = '';
+  document.getElementById('inp-ans').value = '';
+  document.getElementById('inp-ch').value = '';
+  renderVocabTable();
+  renderChapterTabs();
+}
+
+function deleteWord(idx, isCustom) {
+  if (!isCustom) return;
+  customVocab.splice(idx, 1);
+  localStorage.setItem('customVocab', JSON.stringify(customVocab));
+  renderVocabTable();
+  renderChapterTabs();
+}
+
+function renderVocabTable() {
+  const q = document.getElementById('search-vocab').value.toLowerCase();
+  const all = [...baseVocab.map(v=>({...v,custom:false})), ...customVocab.map(v=>({...v,custom:true}))];
+  const filtered = q ? all.filter(v => v.word.toLowerCase().includes(q) || v.answer.includes(q)) : all;
+  document.getElementById('vocab-count').textContent = all.length;
+
+  const tbody = document.getElementById('vocab-tbody');
+  if (filtered.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:var(--muted);padding:20px">ไม่พบคำศัพท์</td></tr>';
+    return;
+  }
+  tbody.innerHTML = filtered.slice(0, 100).map((v, i) => {
+    const realIdx = customVocab.findIndex(c => c.word === v.word && c.answer === v.answer);
+    return `<tr>
+      <td class="en">${v.word} ${v.custom ? '<span class="custom-badge">custom</span>' : ''}</td>
+      <td>${v.answer}</td>
+      <td style="color:var(--muted);font-size:12px">${v.chapter}</td>
+      <td>${v.custom ? `<button class="del-btn" onclick="deleteWord(${realIdx},true)">✕</button>` : ''}</td>
+    </tr>`;
+  }).join('');
+}
+
+// ============================================================
+//  NAV
+// ============================================================
+function showPage(id, el) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('page-'+id).classList.add('active');
+  el.classList.add('active');
+  if (id === 'stats') renderStats();
+  if (id === 'manage') { renderChapterTabs(); renderVocabTable(); }
+}
+
+// Keyboard shortcut
+document.addEventListener('keydown', e => {
+  if (e.code === 'Space' || e.code === 'Enter') {
+    if (document.getElementById('page-quiz').classList.contains('active')) {
+      e.preventDefault(); nextQuestion();
+    }
+  }
+  if (e.code === 'Digit1'||e.code==='Digit2'||e.code==='Digit3'||e.code==='Digit4') {
+    const btns = document.querySelectorAll('.choice-btn');
+    const i = Number(e.key) - 1;
+    if (btns[i]) btns[i].click();
+  }
+});
+
+// Init
+updateScorePills();
+loadQuestion();
+renderChapterTabs();
+renderVocabTable();
+</script>
+</body>
+</html>
