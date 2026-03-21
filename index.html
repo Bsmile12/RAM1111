@@ -185,7 +185,42 @@ nav{position:sticky;top:0;z-index:100;background:rgba(10,10,18,.92);backdrop-fil
 .complete-sub{font-size:14px;color:var(--mu);margin-bottom:18px;}
 .xp-badge{display:inline-block;background:rgba(247,199,106,.15);border:1px solid rgba(247,199,106,.4);border-radius:20px;padding:6px 18px;font-family:var(--fen);font-size:20px;font-weight:700;color:var(--yw);margin-bottom:20px;}
 .back-btn{background:var(--ac);border:none;border-radius:11px;padding:11px 28px;color:white;font-family:var(--fth);font-size:14px;font-weight:600;cursor:pointer;}
-@media(max-width:400px){.word{font-size:21px;}.cgrid{grid-template-columns:1fr;}.sgrid{grid-template-columns:repeat(2,1fr);}.ntab{font-size:11px;padding:0 7px;}.xpn{display:none;}}
+/* ===== BOTTOM NAV BAR (mobile only) ===== */
+.bnav{display:none;position:fixed;bottom:0;left:0;right:0;z-index:200;background:rgba(10,10,18,.97);backdrop-filter:blur(20px);border-top:1px solid var(--brd);height:60px;padding:0 4px;padding-bottom:env(safe-area-inset-bottom);}
+.bnav-inner{display:flex;align-items:stretch;height:100%;}
+.bntab{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;background:none;border:none;cursor:pointer;color:var(--mu);transition:color .2s;padding:6px 2px;font-family:var(--fth);}
+.bntab .bn-icon{font-size:20px;line-height:1;}
+.bntab .bn-label{font-size:10px;line-height:1;}
+.bntab.active{color:var(--ac);}
+.bntab.active .bn-icon{filter:drop-shadow(0 0 6px var(--ac));}
+/* ===== MOBILE RESPONSIVE ===== */
+@media(max-width:600px){
+  /* hide desktop nav tabs, show only logo + xp */
+  .ntab{display:none;}
+  .xpn{margin-left:auto;}
+  /* show bottom nav */
+  .bnav{display:flex;}
+  /* add padding so content isn't hidden behind bottom nav */
+  .page{padding-bottom:68px;}
+  /* quiz wrap center adjust */
+  .wrap{min-height:calc(100vh - 56px - 60px);padding:14px;}
+  .home-wrap{padding-bottom:0;}
+  /* word size on small screen */
+  .word{font-size:24px;}
+  /* choices single col on very small */
+  @media(max-width:380px){.cgrid{grid-template-columns:1fr;}}
+  /* stats 2x2 grid instead of 1 row */
+  .pills{display:grid;grid-template-columns:1fr 1fr;gap:7px;}
+  .home-stats{grid-template-columns:1fr 1fr !important;}
+  /* quiz mode buttons: scroll horizontally */
+  .mrow{overflow-x:auto;padding-bottom:4px;flex-wrap:nowrap;-webkit-overflow-scrolling:touch;}
+  .mbtn{min-width:90px;flex-shrink:0;}
+  /* manage page table: smaller font */
+  .vtb td,.vtb th{font-size:11px;padding:5px 6px;}
+  /* flashcard smaller */
+  .fscene{height:190px;}
+  .fword{font-size:22px;}
+}
 </style>
 </head>
 <body>
@@ -210,7 +245,7 @@ nav{position:sticky;top:0;z-index:100;background:rgba(10,10,18,.92);backdrop-fil
     </div>
 
     <!-- Daily Banner -->
-    <div class="dc-banner" id="dc-banner-home" onclick="showPage('daily',document.getElementById('daily-tab'))">
+    <div class="dc-banner" id="dc-banner-home" onclick="showPage('daily',document.getElementById('bnt-more'))">
       <div class="dc-icon" id="dc-home-icon">&#127775;</div>
       <div class="dc-info">
         <div class="dc-title" id="dc-home-title">Daily Challenge วันนี้</div>
@@ -221,22 +256,22 @@ nav{position:sticky;top:0;z-index:100;background:rgba(10,10,18,.92);backdrop-fil
 
     <div class="home-section">เมนูหลัก</div>
     <div class="home-grid">
-      <div class="home-card" style="--hc:linear-gradient(90deg,#7c6af7,#f76a8c)" onclick="showPage('quiz',document.querySelectorAll('.ntab')[1])">
+      <div class="home-card" style="--hc:linear-gradient(90deg,#7c6af7,#f76a8c)" onclick="showPage('quiz',document.getElementById('bnt-quiz'))">
         <span class="home-card-icon">&#127919;</span>
         <div class="home-card-name">Quiz</div>
         <div class="home-card-desc">4 ตัวเลือก · พิมพ์ตอบ · Time Attack</div>
       </div>
-      <div class="home-card" style="--hc:linear-gradient(90deg,#f76a8c,#f7c76a)" onclick="showPage('flash',document.querySelectorAll('.ntab')[2])">
+      <div class="home-card" style="--hc:linear-gradient(90deg,#f76a8c,#f7c76a)" onclick="showPage('flash',document.getElementById('bnt-flash'))">
         <span class="home-card-icon">&#127183;</span>
         <div class="home-card-name">Flashcard</div>
         <div class="home-card-desc">พลิกการ์ดทบทวนคำศัพท์</div>
       </div>
-      <div class="home-card" style="--hc:linear-gradient(90deg,#3dd68c,#7c6af7)" onclick="showPage('stats',document.querySelectorAll('.ntab')[3])">
+      <div class="home-card" style="--hc:linear-gradient(90deg,#3dd68c,#7c6af7)" onclick="showPage('stats',document.getElementById('bnt-stats'))">
         <span class="home-card-icon">&#128202;</span>
         <div class="home-card-name">สถิติ</div>
         <div class="home-card-desc">XP · Streak · ความแม่นยำต่อบท</div>
       </div>
-      <div class="home-card" style="--hc:linear-gradient(90deg,#f7c76a,#3dd68c)" onclick="showPage('manage',document.querySelectorAll('.ntab')[4])">
+      <div class="home-card" style="--hc:linear-gradient(90deg,#f7c76a,#3dd68c)" onclick="showPage('manage',document.getElementById('bnt-more'))">
         <span class="home-card-icon">&#9881;</span>
         <div class="home-card-name">จัดการ Vocab</div>
         <div class="home-card-desc">เลือก Chapter · เพิ่มคำเอง</div>
@@ -244,7 +279,7 @@ nav{position:sticky;top:0;z-index:100;background:rgba(10,10,18,.92);backdrop-fil
     </div>
 
     <div class="home-section">สถิติวันนี้</div>
-    <div class="home-stats">
+    <div class="home-stats" style="grid-template-columns:repeat(auto-fit,minmax(80px,1fr))">
       <div class="home-stat"><span class="home-stat-num" style="color:var(--gn)" id="hst-c">0</span><div class="home-stat-lbl">ถูก</div></div>
       <div class="home-stat"><span class="home-stat-num" style="color:var(--rd)" id="hst-w">0</span><div class="home-stat-lbl">ผิด</div></div>
       <div class="home-stat"><span class="home-stat-num" style="color:var(--yw)" id="hst-s">0</span><div class="home-stat-lbl">Streak</div></div>
@@ -261,7 +296,7 @@ nav{position:sticky;top:0;z-index:100;background:rgba(10,10,18,.92);backdrop-fil
       <button class="mbtn" onclick="setMode('time',this)"><span class="mi">&#9201;</span>Time Attack</button>
     </div>
     <!-- Daily Challenge Banner -->
-    <div class="dc-banner" id="dc-banner" onclick="showPage('daily',document.getElementById('daily-tab'))">
+    <div class="dc-banner" id="dc-banner" onclick="showPage('daily',document.getElementById('bnt-more'))">
       <div class="dc-icon" id="dc-banner-icon">&#127775;</div>
       <div class="dc-info">
         <div class="dc-title" id="dc-banner-title">Daily Challenge วันนี้</div>
@@ -376,6 +411,44 @@ nav{position:sticky;top:0;z-index:100;background:rgba(10,10,18,.92);backdrop-fil
         <tbody id="vtb"></tbody>
       </table>
     </div>
+  </div>
+</div>
+
+<!-- BOTTOM NAV BAR (mobile) -->
+<div class="bnav" id="bnav">
+  <div class="bnav-inner">
+    <button class="bntab active" id="bnt-home" onclick="showPage('home',this)">
+      <span class="bn-icon">&#127968;</span>
+      <span class="bn-label">หน้าหลัก</span>
+    </button>
+    <button class="bntab" id="bnt-quiz" onclick="showPage('quiz',this)">
+      <span class="bn-icon">&#127919;</span>
+      <span class="bn-label">Quiz</span>
+    </button>
+    <button class="bntab" id="bnt-flash" onclick="showPage('flash',this)">
+      <span class="bn-icon">&#127183;</span>
+      <span class="bn-label">Flash</span>
+    </button>
+    <button class="bntab" id="bnt-stats" onclick="showPage('stats',this)">
+      <span class="bn-icon">&#128202;</span>
+      <span class="bn-label">Stats</span>
+    </button>
+    <button class="bntab" id="bnt-more" onclick="toggleMoreMenu()">
+      <span class="bn-icon">&#8943;</span>
+      <span class="bn-label">เพิ่มเติม</span>
+    </button>
+  </div>
+</div>
+
+<!-- MORE MENU (mobile) -->
+<div id="more-menu" style="display:none;position:fixed;bottom:60px;left:0;right:0;z-index:199;background:rgba(10,10,18,.97);backdrop-filter:blur(20px);border-top:1px solid var(--brd);padding:12px 16px;">
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+    <button onclick="showPage('daily',document.getElementById('daily-tab'));toggleMoreMenu()" style="background:var(--card);border:1px solid var(--brd);border-radius:12px;padding:12px;color:var(--tx);font-family:var(--fth);font-size:13px;cursor:pointer;display:flex;align-items:center;gap:8px;">
+      <span style="font-size:20px;">&#127775;</span> Daily
+    </button>
+    <button onclick="showPage('manage',document.getElementById('bnt-more'));toggleMoreMenu()" style="background:var(--card);border:1px solid var(--brd);border-radius:12px;padding:12px;color:var(--tx);font-family:var(--fth);font-size:13px;cursor:pointer;display:flex;align-items:center;gap:8px;">
+      <span style="font-size:20px;">&#9881;</span> จัดการ
+    </button>
   </div>
 </div>
 
@@ -947,18 +1020,44 @@ function renderTbl(){
 }
 
 // --- NAV ---
-function showPage(id,el) {
+const PAGE_TO_BNT = {
+  home:'bnt-home', quiz:'bnt-quiz', flash:'bnt-flash',
+  stats:'bnt-stats', daily:'bnt-more', manage:'bnt-more'
+};
+
+function showPage(id, el) {
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   document.querySelectorAll('.ntab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.bntab').forEach(t=>t.classList.remove('active'));
   document.getElementById('page-'+id).classList.add('active');
-  el.classList.add('active');
+  if(el && el.classList) el.classList.add('active');
+  // sync bottom nav
+  const bntId = PAGE_TO_BNT[id];
+  if(bntId) { const bnt = document.getElementById(bntId); if(bnt) bnt.classList.add('active'); }
+  // close more menu
+  document.getElementById('more-menu').style.display = 'none';
   isDailyMode = (id === 'daily');
-  if(id==='stats')renderStats();
+  if(id==='stats') renderStats();
   if(id==='manage'){renderChTabs();renderTbl();}
-  if(id==='flash')initFlash();
-  if(id==='daily')renderDailyPage();
-  if(id!=='quiz')clrTmr();
+  if(id==='flash') initFlash();
+  if(id==='daily') renderDailyPage();
+  if(id==='home')  renderHome();
+  if(id!=='quiz')  clrTmr();
 }
+
+function toggleMoreMenu() {
+  const m = document.getElementById('more-menu');
+  m.style.display = m.style.display === 'none' ? 'block' : 'none';
+}
+
+// close more menu when tapping outside
+document.addEventListener('click', e => {
+  const m = document.getElementById('more-menu');
+  const btn = document.getElementById('bnt-more');
+  if(m.style.display !== 'none' && !m.contains(e.target) && e.target !== btn && !btn.contains(e.target)) {
+    m.style.display = 'none';
+  }
+});
 
 document.addEventListener('keydown',e=>{
   const oQ=document.getElementById('page-quiz').classList.contains('active');
@@ -1339,13 +1438,6 @@ const _origUpdPills = updPills;
 updPills = function() {
   _origUpdPills();
   if(document.getElementById('page-home').classList.contains('active')) renderHome();
-};
-
-// update showPage to handle home
-const _origShowPage = showPage;
-showPage = function(id, el) {
-  _origShowPage(id, el);
-  if(id === 'home') renderHome();
 };
 
 updateDCBanner();
