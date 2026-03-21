@@ -406,10 +406,12 @@ nav{position:sticky;top:0;z-index:100;background:rgba(10,10,18,.92);backdrop-fil
     <div class="cc">
       <div style="font-size:11px;font-weight:600;color:var(--mu);margin-bottom:9px;text-transform:uppercase;letter-spacing:1px;">คำศัพท์ทั้งหมด (<span id="vc">0</span> คำ)</div>
       <input class="fi" id="sv" placeholder="&#128269; ค้นหา..." style="margin-bottom:10px;width:100%" oninput="renderTbl()"/>
+      <div style="max-height:60vh;overflow-y:auto;border-radius:8px;">
       <table class="vtb">
-        <thead><tr><th>คำศัพท์</th><th>คำอ่าน</th><th>ความหมาย</th><th>Ch.</th><th></th></tr></thead>
+        <thead style="position:sticky;top:0;background:var(--card);z-index:1;"><tr><th>คำศัพท์</th><th>คำอ่าน</th><th>ความหมาย</th><th>Ch.</th><th></th></tr></thead>
         <tbody id="vtb"></tbody>
       </table>
+      </div>
     </div>
   </div>
 </div>
@@ -467,6 +469,16 @@ nav{position:sticky;top:0;z-index:100;background:rgba(10,10,18,.92);backdrop-fil
 </div>
 
 <script>
+// ============================================================
+// ข้อมูลคำศัพท์ทั้งหมด (BASE VOCABULARY DATA)
+// ============================================================
+// BASE คือ array เก็บคำศัพท์ทุกคำในระบบ
+// แต่ละคำมี 4 field:
+//   word    = คำศัพท์ภาษาอังกฤษ
+//   pron    = คำอ่านภาษาไทย เช่น "ธิ้งค์ แท้งค์"
+//   answer  = ความหมายภาษาไทย
+//   chapter = เลขบทที่คำนี้อยู่ (1-10)
+// ถ้าต้องการเพิ่มคำศัพท์ถาวร ให้เพิ่มที่นี่เลย
 const BASE=[
 {word:"think tank",pron:"ธิ้งค์ แท้งค์",answer:"มันสมอง, องค์กรวิจัย",chapter:1},
 {word:"appearance",pron:"อะเพียแรนซ์",answer:"การปรากฏขึ้น",chapter:1},
@@ -584,7 +596,7 @@ const BASE=[
 {word:"popular",pron:"ป็อพพิวเลอร์",answer:"เป็นที่นิยม",chapter:6},
 {word:"audience",pron:"ออดิเอ้นซ์",answer:"ผู้ชม, ผู้ฟัง",chapter:6},
 {word:"explore",pron:"เอ็กซ์พลอร์",answer:"สำรวจ",chapter:7},
-{word:"determine",pron:"ดีเทอร์มิน",answer:"กำหนด, ตัดสินใจ",chapter:7},
+{word:"determine",pron:"ดีเทอร์มิน",answer:"กำหนด, ตัดสินใจฟ",chapter:7},
 {word:"destination",pron:"เดสทิเนชั่น",answer:"จุดหมาย",chapter:7},
 {word:"mention",pron:"เมนชั่น",answer:"กล่าวถึง",chapter:7},
 {word:"infinite",pron:"อินฟินิท",answer:"ไม่มีที่สิ้นสุด",chapter:7},
@@ -664,19 +676,51 @@ const BASE=[
 {word:"passenger",pron:"แพสเซนเจอร์",answer:"ผู้โดยสาร",chapter:10}
 ];
 
+// ============================================================
+// ตัวแปรสถานะหลัก (STATE VARIABLES)
+// ============================================================
+// custom  = คำศัพท์ที่ผู้ใช้เพิ่มเองไว้ใน localStorage key 'cv'
+// selCh   = บทที่เลือกไว้ (null = เลือกทั้งหมด) localStorage key 'sc'
+// st      = object รวมสถิติทั้งหมด localStorage key 'qs'
+//   st.c  = จำนวนตอบถูกสะสมตลอดกาล
+//   st.w  = จำนวนตอบผิดสะสมตลอดกาล
+//   st.ms = max streak สูงสุดที่เคยทำได้
+//   st.h  = history array บันทึก 1=ถูก 0=ผิด 50 ข้อล่าสุด
+//   st.ww = weak words object { "คำ": จำนวนครั้งที่ผิด }
+//   st.cs = chapter stats { "1": {c: ถูก, t: ทั้งหมด} }
+//   st.xp = XP สะสมทั้งหมด
+// sc, wc  = ถูก/ผิดในเซสชันปัจจุบัน (รีเซ็ตเมื่อโหลดหน้า)
+// strk    = streak ปัจจุบัน, mstrk = max streak ในเซสชันนี้
+// ans     = true เมื่อตอบแล้ว ป้องกันคลิกซ้ำ
+// curQ    = คำถามปัจจุบัน, lastQ = คำถามก่อนหน้า ป้องกันซ้ำ
+// mode    = โหมดปัจจุบัน 'mc' / 'type' / 'time'
+// tmr     = interval id ของ timer, tl = เวลาที่เหลือ (วินาที)
 let custom=JSON.parse(localStorage.getItem('cv')||'[]');
 let selCh=JSON.parse(localStorage.getItem('sc')||'null');
 let st={...{c:0,w:0,ms:0,h:[],ww:{},cs:{},xp:0},...JSON.parse(localStorage.getItem('qs')||'{}')};
 let sc=0,wc=0,strk=0,mstrk=st.ms||0,ans=false,curQ=null,lastQ=null,mode='mc';
 let tmr=null,tl=10;
 
+// ============================================================
+// ระบบ SHUFFLE DECK
+// ============================================================
+// โหมด MC ใช้ระบบ deck:
+//   รอบแรก  = สับไพ่คำทั้งหมดแล้วดึงทีละใบ ไม่ซ้ำจนครบทุกคำ
+//   หลังครบ = สุ่มอิสระ อาจซ้ำได้
+// mcDeck  = array คำที่ยังไม่ได้ถาม ลดลงทีละ 1 ต่อข้อ
+// mcRound = 0 คือยังไม่ได้ buildDeck ครั้งแรก
+// โหมด type/time ใช้สุ่มปกติ แต่มีโอกาส 35% ดึง weak word
 // --- Shuffle Deck (ไม่ซ้ำจนครบ แล้วค่อยสุ่มมั่ว) ---
 let mcDeck=[],mcRound=0; // round=0: ยังอยู่ใน deck round, round>0: สุ่มอิสระ
+// buildDeck() = สร้าง deck ใหม่โดยสับไพ่คำทั้งหมดในกลุ่มที่เลือก
 function buildDeck(){
   const p=pool();
   mcDeck=p.slice().sort(()=>Math.random()-.5);
   mcRound++;
 }
+// pickQ() = เลือกคำถามถัดไป
+//   โหมด type/time: สุ่มจาก pool (มีโอกาส 35% ดึง weak word)
+//   โหมด mc: ดึงจาก deck ทีละใบ ถ้า deck หมดแล้วสุ่มอิสระ
 function pickQ(){
   // โหมด type/time ยังสุ่มปกติ (อาจซ้ำ)
   if(mode!=='mc'){
@@ -700,27 +744,41 @@ function pickQ(){
   lastQ=q; return q;
 }
 
+// ============================================================
+// ระบบ LEVEL และ XP
+// ============================================================
+// LVS = array กำหนด level ทั้ง 7 ระดับ
+//   l  = เลข level
+//   n  = ชื่อ level
+//   x  = XP ขั้นต่ำที่ต้องมีเพื่ออยู่ level นี้
+//   nx = XP ที่ต้องการเพื่อขึ้น level ถัดไป
 const LVS=[
   {l:1,n:'Beginner',x:0,nx:100},{l:2,n:'Learner',x:100,nx:250},
   {l:3,n:'Student',x:250,nx:500},{l:4,n:'Scholar',x:500,nx:900},
   {l:5,n:'Expert',x:900,nx:1500},{l:6,n:'Master',x:1500,nx:2500},
   {l:7,n:'Legend',x:2500,nx:99999}
 ];
+// getLv(xp) = คืนค่า level object ที่ตรงกับ XP ที่มี
 function getLv(xp){let l=LVS[0];for(const v of LVS)if(xp>=v.x)l=v;return l;}
+// addXP(n) = เพิ่ม XP n คะแนน แล้วเช็คว่า level up มั้ย
+//   ถ้า level เปลี่ยนจะเรียก showLvUp() หลัง 500ms
 function addXP(n){
   const b=getLv(st.xp); st.xp+=n; saveSt(); updXP(); showToast('+'+n+' XP');
   const a=getLv(st.xp); if(a.l>b.l)setTimeout(()=>showLvUp(a),500);
 }
+// updXP() = อัปเดต UI แสดง level และ XP bar ใน nav
 function updXP(){
   const i=getLv(st.xp);
   const p=Math.min(100,Math.round((st.xp-i.x)/(i.nx-i.x)*100));
   document.getElementById('nlv').textContent='Lv.'+i.l;
   document.getElementById('nxp').style.width=p+'%';
 }
+// showToast(m) = แสดงข้อความลอยชั่วคราว เช่น '+10 XP' มุมขวาบน
 function showToast(m){
   const t=document.createElement('div');t.className='toast';t.textContent=m;
   document.body.appendChild(t);setTimeout(()=>t.remove(),1900);
 }
+// showLvUp(info) = แสดง popup Level Up! พร้อมชื่อ level ใหม่
 function showLvUp(info){
   const o=document.createElement('div');o.className='lvov';
   o.innerHTML='<div class="lvcard">'
@@ -732,8 +790,15 @@ function showLvUp(info){
   document.body.appendChild(o); playLv();
 }
 
+// ============================================================
+// ระบบเสียง (AUDIO ENGINE)
+// ============================================================
+// ใช้ Web Audio API สร้างเสียงจาก oscillator ไม่ต้องโหลดไฟล์เสียง
+// ac2 = AudioContext instance สร้างครั้งแรกเมื่อมีการกดปุ่ม
 const AudioCtx2=window.AudioContext||window.webkitAudioContext; let ac2;
+// ga() = คืน AudioContext (lazy init เพื่อหลีกเลี่ยง autoplay policy)
 function ga(){if(!ac2)ac2=new AudioCtx2();return ac2;}
+// pt(freq, type, duration, volume) = เล่นเสียง tone เดี่ยว
 function pt(f,t,d,v=.28){
   try{const c=ga(),o=c.createOscillator(),g=c.createGain();
   o.connect(g);g.connect(c.destination);o.type=t;o.frequency.value=f;
@@ -741,12 +806,23 @@ function pt(f,t,d,v=.28){
   g.gain.exponentialRampToValueAtTime(.001,c.currentTime+d);
   o.start();o.stop(c.currentTime+d);}catch(e){}
 }
+// playOk() = เสียงตอบถูก (3 โน้ตเรียงขึ้น C-E-G)
 function playOk(){pt(523,'sine',.1);setTimeout(()=>pt(659,'sine',.1),80);setTimeout(()=>pt(784,'sine',.2),160);}
+// playNg() = เสียงตอบผิด (เสียง buzz ต่ำ)
 function playNg(){pt(220,'sawtooth',.15,.2);setTimeout(()=>pt(180,'sawtooth',.2,.15),100);}
+// playLv() = เสียง level up (4 โน้ตไต่ขึ้น)
 function playLv(){[523,659,784,1047].forEach((f,i)=>setTimeout(()=>pt(f,'sine',.15),i*100));}
+// playTk() = เสียง tick นาฬิกา ใช้ตอน timer ใกล้หมด
 function playTk(){pt(880,'square',.04,.1);}
+// playTo() = เสียงหมดเวลา (เสียงต่ำหนัก)
 function playTo(){pt(150,'sawtooth',.4,.3);}
 
+// ============================================================
+// VOCABULARY POOL และ CHOICES
+// ============================================================
+// pool() = คืน array คำศัพท์ที่ใช้งานอยู่ในตอนนี้
+//   selCh มีค่า = กรองเฉพาะบทที่เลือก
+//   selCh เป็น null = ใช้ทั้งหมด (BASE + custom)
 function pool(){
   const all=[...BASE,...custom];
   if(!selCh)return all;
@@ -754,6 +830,9 @@ function pool(){
   return f.length?f:all;
 }
 
+// getChoices(c) = สร้างตัวเลือก 4 ข้อสำหรับคำถาม c
+//   ข้อแรกคือคำตอบถูกต้อง ที่เหลืออีก 3 สุ่มจาก pool
+//   แล้ว shuffle ลำดับก่อน return
 function getChoices(c){
   const ch=[c.answer];
   const p=pool().map(q=>q.answer).filter(a=>a!==c.answer);
@@ -764,12 +843,21 @@ function getChoices(c){
   return ch.sort(()=>Math.random()-.5);
 }
 
+// ============================================================
+// QUIZ LOGIC
+// ============================================================
+// setMode(m, el) = เปลี่ยนโหมด quiz
+//   m = 'mc' (4 ตัวเลือก) / 'type' (พิมพ์ตอบ) / 'time' (จับเวลา)
+//   รีเซ็ต deck ถ้าเปลี่ยนกลับมาโหมด mc
 function setMode(m,el){
   mode=m; clrTmr();
   if(m==='mc'){mcDeck=[];mcRound=0;} // รีเซ็ต deck เมื่อกลับมาโหมด MC
   document.querySelectorAll('.mbtn').forEach(b=>b.classList.remove('active'));
   el.classList.add('active'); loadQ();
 }
+// loadQ() = โหลดคำถามใหม่เข้า UI
+//   เรียก pickQ() หาคำถาม แล้วแสดง word/pron/choices ตามโหมด
+//   โหมด type: แสดง input box, โหมด time: เริ่ม timer
 function loadQ(){
   ans=false; document.getElementById('rt').textContent='';
   curQ=pickQ(); if(!curQ)return;
@@ -795,6 +883,9 @@ function loadQ(){
     else tw.classList.add('thide');
   }
 }
+// startTmr() = เริ่มนับถอยหลัง 10 วินาที (Time Attack mode)
+//   ทุก 100ms: ลด tl, อัปเดต ring, เปลี่ยนสี เขียว-เหลือง-แดง
+//   ถ้า tl <= 0 จะเรียก toAns() (หมดเวลา)
 function startTmr(){
   clrTmr(); tl=10; updRing(10);
   tmr=setInterval(()=>{
@@ -808,12 +899,16 @@ function startTmr(){
     if(tl<=0){clrTmr();toAns();}
   },100);
 }
+// updRing(l) = อัปเดต SVG timer ring ให้แสดงเวลาที่เหลือ l วินาที
 function updRing(l){
   const c=175.9,o=c*(1-Math.max(0,l)/10);
   document.getElementById('trf').setAttribute('stroke-dashoffset',o);
   document.getElementById('tn').textContent=Math.max(0,Math.ceil(l));
 }
+// clrTmr() = หยุด timer interval เรียกเมื่อตอบแล้วหรือเปลี่ยนหน้า
 function clrTmr(){if(tmr){clearInterval(tmr);tmr=null;}}
+// toAns() = เรียกเมื่อหมดเวลา (Time Attack)
+//   แสดงคำตอบที่ถูก, บันทึกว่าผิด, อัปเดตสถิติ
 function toAns(){
   ans=true;
   document.querySelectorAll('.cbtn').forEach(b=>{
@@ -831,6 +926,9 @@ function toAns(){
   if(st.h.length>50)st.h.shift();
   saveSt(); updPills();
 }
+// selAns(btn, ch) = เรียกเมื่อผู้ใช้คลิกตัวเลือก (โหมด mc/time)
+//   ป้องกันคลิกซ้ำด้วย ans flag
+//   highlight ปุ่มที่ถูกต้อง แล้วส่งต่อไป handle()
 function selAns(btn,ch){
   if(ans)return; ans=true; clrTmr();
   const ok=ch===curQ.answer;
@@ -840,6 +938,9 @@ function selAns(btn,ch){
   });
   handle(ok,btn);
 }
+// subType() = เรียกเมื่อผู้ใช้กด "ยืนยัน" หรือ Enter (โหมด type)
+//   normalize = ตัดช่องว่างและเครื่องหมายจุลภาคก่อนเปรียบเทียบ
+//   รองรับคำตอบหลายรูปแบบที่คั่นด้วย comma เช่น "หดตัว, ย่อเล็กลง"
 function subType(){
   if(ans)return;
   const i=document.getElementById('ti');
@@ -851,6 +952,11 @@ function subType(){
   if(!ok)i.value=curQ.answer;
   handle(ok,null);
 }
+// handle(ok, btn) = ประมวลผลคำตอบ (ถูกหรือผิด)
+//   ok = true/false, btn = ปุ่มที่กด (null ถ้าโหมด type)
+//   ถ้าถูก: เพิ่ม streak, คำนวณ XP (bonus ถ้า streak 3+/5+), เช็ค boss trigger
+//   ถ้าผิด: เพิ่มใน weak words, รีเซ็ต streak
+//   บันทึกสถิติ chapter, บันทึกลง localStorage
 function handle(ok,btn){
   const rt=document.getElementById('rt');
   if(ok){
@@ -876,7 +982,10 @@ function handle(ok,btn){
   if(st.h.length>50)st.h.shift();
   st.ms=mstrk; saveSt(); updPills();
 }
+// nextQ() = ข้ามไปคำถามถัดไป เรียกเมื่อกดปุ่ม 'ต่อไป' หรือ Space/Enter
 function nextQ(){clrTmr();loadQ();}
+// updPills() = อัปเดต UI แสดงคะแนน (ถูก/ผิด/แม่นยำ/รวม/streak)
+//   เรียกทุกครั้งที่ตอบข้อ และตอน init
 function updPills(){
   const t=sc+wc;
   document.getElementById('pc').textContent=sc;
@@ -885,12 +994,21 @@ function updPills(){
   document.getElementById('pt').textContent=t;
   document.getElementById('snum').textContent=strk;
 }
+// saveSt() = บันทึกสถิติทั้งหมดลง localStorage (key: 'qs')
 function saveSt(){localStorage.setItem('qs',JSON.stringify(st));}
 
+// ============================================================
+// FLASHCARD MODE
+// ============================================================
+// fdk = flashcard deck (array คำทั้งหมดที่ยังไม่รู้)
+// fi  = index การ์ดปัจจุบัน
 // --- FLASHCARD ---
 let fdk=[],fi=0;
+// initFlash() = โหลด deck ใหม่จาก pool ทั้งหมด แล้ว shuffle
 function initFlash(){fdk=[...pool()];fcShuffle();}
+// fcShuffle() = สับลำดับการ์ดใหม่ทั้งหมด กลับไปใบแรก
 function fcShuffle(){fdk.sort(()=>Math.random()-.5);fi=0;fcShow();}
+// fcShow() = แสดงการ์ดปัจจุบัน ทั้งหน้าหน้า-หลัง
 function fcShow(){
   if(!fdk.length)return;
   const c=fdk[fi];
@@ -901,8 +1019,14 @@ function fcShow(){
   document.getElementById('fpg').textContent=(fi+1)+' / '+fdk.length;
   document.getElementById('fci').classList.remove('flip');
 }
+// fcFlip() = พลิกการ์ด toggle class 'flip' สำหรับ CSS 3D transform
 function fcFlip(){document.getElementById('fci').classList.toggle('flip');}
+// fcPrev() = ย้อนกลับการ์ดก่อนหน้า ถ้า fi > 0
 function fcPrev(){if(fi>0){fi--;fcShow();}}
+// fcMark(k) = ทำเครื่องหมายการ์ดปัจจุบัน
+//   k = true  = 'จำได้แล้ว' ลบออกจาก deck
+//   k = false = 'จำไม่ได้' เลื่อนไปการ์ดถัดไป ยังอยู่ใน deck
+//   ถ้า deck หมด = แสดง alert แล้ว reset
 function fcMark(k){
   if(k){
     fdk.splice(fi,1);
@@ -912,7 +1036,15 @@ function fcMark(k){
   fcShow();
 }
 
+// ============================================================
+// STATS PAGE
+// ============================================================
 // --- STATS ---
+// renderStats() = วาด UI หน้าสถิติทั้งหมด:
+//   XP/Level bar, จำนวนทำ/ถูก/max streak
+//   accuracy bar แต่ละ chapter (เขียว >= 80%, เหลือง >= 50%, แดง < 50%)
+//   history chart 20 ข้อล่าสุด
+//   weak words list เรียงจากผิดมากไปน้อย
 function renderStats(){
   const t=st.c+st.w;
   document.getElementById('sto').textContent=t;
@@ -947,6 +1079,8 @@ function renderStats(){
     +' <span style="opacity:.5">(x'+c+')</span></div>').join('')
     :'<div class="es">🎉 ยังไม่มีคำที่ผิดซ้ำ</div>';
 }
+// resetSt() = รีเซ็ตสถิติทั้งหมด ต้องกด confirm ก่อน
+//   ล้างทั้ง localStorage และ in-memory state ทุกตัว
 function resetSt(){
   if(!confirm('รีเซ็ตสถิติทั้งหมด?'))return;
   st={c:0,w:0,ms:0,h:[],ww:{},cs:{},xp:0};
@@ -954,10 +1088,15 @@ function resetSt(){
   saveSt();updPills();renderStats();updXP();
 }
 
+// ============================================================
+// MANAGE VOCABULARY PAGE
+// ============================================================
 // --- MANAGE ---
+// getChs() = คืน array เลขบทที่มีในระบบ (BASE + custom) เรียงจากน้อยไปมาก
 function getChs(){
   return[...new Set([...BASE,...custom].map(v=>v.chapter))].sort((a,b)=>a-b);
 }
+// renderChTabs() = สร้าง UI checkbox สำหรับเลือก chapter
 function renderChTabs(){
   const el=document.getElementById('ctabs');
   const chs=getChs();
@@ -971,7 +1110,10 @@ function renderChTabs(){
       +' <span style="opacity:.5;font-size:10px">('+cnt+')</span></label>';
   }).join('');
 }
+// togCh(el) = toggle class 'sel' เมื่อ check/uncheck chapter checkbox
 function togCh(el){el.closest('.ctab').classList.toggle('sel',el.checked);}
+// applyFilter() = บันทึก chapter ที่เลือกลง localStorage
+//   รีเซ็ต mcDeck ใหม่เพื่อให้ filter มีผลทันที
 function applyFilter(){
   const chk=[...document.querySelectorAll('#ctabs input:checked')].map(el=>Number(el.value));
   selCh=chk.length?chk:null;
@@ -979,6 +1121,9 @@ function applyFilter(){
   mcDeck=[];mcRound=0; // รีเซ็ต deck เมื่อเปลี่ยน chapter
   alert('✅ บันทึกแล้ว');
 }
+// addWord() = เพิ่มคำศัพท์ใหม่เข้า custom array
+//   บันทึกลง localStorage key 'cv'
+//   field ที่ต้องกรอก: word (EN), pron (คำอ่าน), answer (ความหมาย), chapter
 function addWord(){
   const w=document.getElementById('iw').value.trim();
   const p=document.getElementById('ip').value.trim();
@@ -990,24 +1135,33 @@ function addWord(){
   ['iw','ip','ia','ic'].forEach(id=>document.getElementById(id).value='');
   renderTbl(); renderChTabs();
 }
+// delWord(i) = ลบคำ custom ที่ index i ออกจาก array และ localStorage
 function delWord(i){
   if(!confirm('ลบคำนี้?'))return;
   custom.splice(i,1);
   localStorage.setItem('cv',JSON.stringify(custom));
   renderTbl(); renderChTabs();
 }
+// renderTbl() = วาดตาราง vocab ทั้งหมด พร้อม search filter
+//   กรองด้วย word / answer / pron ได้
+//   แสดงครบทุกคำ ไม่จำกัด, custom word มีปุ่มลบ
+//   มี counter แสดงจำนวนที่กรองได้ vs ทั้งหมด
 function renderTbl(){
   const q=document.getElementById('sv').value.toLowerCase();
   const all=[...BASE.map(v=>({...v,isC:false})),...custom.map(v=>({...v,isC:true}))];
   const f=q?all.filter(v=>v.word.toLowerCase().includes(q)
     ||v.answer.includes(q)||(v.pron&&v.pron.includes(q))):all;
-  document.getElementById('vc').textContent=all.length;
+  // แสดงจำนวน: ถ้ามีการค้นหา = "พบ X / ทั้งหมด Y คำ", ถ้าไม่มี = "Y คำ"
+  document.getElementById('vc').textContent=q
+    ? 'พบ '+f.length+' / '+all.length
+    : all.length;
   const tb=document.getElementById('vtb');
   if(!f.length){
-    tb.innerHTML='<tr><td colspan="5" style="text-align:center;color:var(--mu);padding:16px">ไม่พบ</td></tr>';
+    tb.innerHTML='<tr><td colspan="5" style="text-align:center;color:var(--mu);padding:16px">ไม่พบคำที่ค้นหา</td></tr>';
     return;
   }
-  tb.innerHTML=f.slice(0,100).map(v=>{
+  // แสดงครบทุกคำ ไม่ตัด slice
+  tb.innerHTML=f.map(v=>{
     const ri=custom.findIndex(c=>c.word===v.word&&c.answer===v.answer);
     return '<tr>'
       +'<td class="enc">'+v.word+(v.isC?' <span class="cbg">custom</span>':'')+'</td>'
@@ -1019,12 +1173,23 @@ function renderTbl(){
   }).join('');
 }
 
+// ============================================================
+// NAVIGATION SYSTEM
+// ============================================================
+// PAGE_TO_BNT = map จาก page id ไป bottom nav button id
+// ใช้เพื่อ sync highlight ระหว่าง top nav และ bottom nav พร้อมกัน
 // --- NAV ---
 const PAGE_TO_BNT = {
   home:'bnt-home', quiz:'bnt-quiz', flash:'bnt-flash',
   stats:'bnt-stats', daily:'bnt-more', manage:'bnt-more'
 };
 
+// showPage(id, el) = เปลี่ยนหน้าที่แสดง
+//   1. ซ่อนทุก .page, ล้าง active ทุก tab
+//   2. แสดง page-{id}
+//   3. highlight tab ที่กด (top nav และ bottom nav)
+//   4. ปิด more menu ถ้าเปิดอยู่
+//   5. เรียก render function ของหน้านั้น
 function showPage(id, el) {
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   document.querySelectorAll('.ntab').forEach(t=>t.classList.remove('active'));
@@ -1045,12 +1210,13 @@ function showPage(id, el) {
   if(id!=='quiz')  clrTmr();
 }
 
+// toggleMoreMenu() = เปิด/ปิด more menu (mobile) ที่โผล่เหนือ bottom nav
 function toggleMoreMenu() {
   const m = document.getElementById('more-menu');
   m.style.display = m.style.display === 'none' ? 'block' : 'none';
 }
 
-// close more menu when tapping outside
+// ปิด more menu อัตโนมัติเมื่อ tap นอก menu (event delegation)
 document.addEventListener('click', e => {
   const m = document.getElementById('more-menu');
   const btn = document.getElementById('bnt-more');
@@ -1081,13 +1247,27 @@ document.getElementById('ti').addEventListener('keydown',e=>{
 // ============================================================
 // DAILY CHALLENGE
 // ============================================================
+// ============================================================
+// DAILY CHALLENGE SYSTEM
+// ============================================================
+// ทุกวันจะมีชุดคำถาม 10 ข้อ รับ bonus XP เมื่อทำครบ
+// ข้อมูลเก็บใน localStorage key 'dc':
+//   date     = วันที่ (YYYY-M-D) เพื่อเช็คว่ายังเป็นวันเดิมมั้ย
+//   done     = ทำไปแล้วกี่ข้อ
+//   correct  = ตอบถูกกี่ข้อ
+//   complete = true เมื่อทำครบ 10 ข้อแล้ว
+// DC_TOTAL    = จำนวนข้อ daily ต่อวัน (10 ข้อ)
+// DC_BONUS_XP = XP bonus เมื่อทำครบ (50 XP)
 const DC_TOTAL = 10;
 const DC_BONUS_XP = 50;
 
+// todayKey() = คืน string วันที่วันนี้ 'YYYY-M-D' ใช้เป็น key เช็ควันที่
 function todayKey() {
   const d = new Date();
   return d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate();
 }
+// getDC() = อ่านสถานะ daily challenge จาก localStorage
+//   ถ้าวันที่ไม่ตรง = reset ค่าใหม่ (วันใหม่เริ่มใหม่อัตโนมัติ)
 function getDC() {
   const raw = localStorage.getItem('dc');
   const def = {date:'',done:0,correct:0,complete:false};
@@ -1096,6 +1276,7 @@ function getDC() {
   if(saved.date !== todayKey()) return {...def, date: todayKey()};
   return saved;
 }
+// saveDC(dc) = บันทึกสถานะ daily challenge ลง localStorage
 function saveDC(dc) { localStorage.setItem('dc', JSON.stringify(dc)); }
 
 let dcState = getDC();
@@ -1104,6 +1285,8 @@ let dcIdx = 0;        // ข้อปัจจุบันใน daily
 let dcCorrect = 0;
 let isDailyMode = false;
 
+// buildDailyQuestions() = สุ่มเลือก 10 คำจาก pool สำหรับวันนี้
+//   ใช้ pseudo-random seed จากวันที่
 function buildDailyQuestions() {
   // สุ่มคำด้วย seed จากวันที่ (ทุกคนได้คำชุดเดียวกันในวันเดียวกัน)
   const p = pool();
@@ -1115,6 +1298,9 @@ function buildDailyQuestions() {
   return shuffled.slice(0, Math.min(DC_TOTAL, shuffled.length));
 }
 
+// renderDailyPage() = วาด UI หน้า Daily Challenge
+//   ถ้าทำครบแล้ว = แสดง complete screen
+//   ถ้ายังไม่จบ   = แสดง progress bar + คำถามข้อปัจจุบัน
 function renderDailyPage() {
   dcState = getDC();
   const wrap = document.getElementById('dc-wrap');
@@ -1161,6 +1347,7 @@ function renderDailyPage() {
   loadDailyQ();
 }
 
+// loadDailyQ() = โหลดคำถาม daily ข้อถัดไปเข้า UI
 function loadDailyQ() {
   if(dcIdx >= dcQuestions.length) { completeDailyChallenge(); return; }
   const q = dcQuestions[dcIdx];
@@ -1186,6 +1373,9 @@ function loadDailyQ() {
   });
 }
 
+// dcAnswer(btn, choice, q) = ประมวลผลคำตอบในโหมด Daily
+//   อัปเดต progress bar, บันทึก state
+//   เรียก completeDailyChallenge() ถ้าทำครบ 10 ข้อ
 function dcAnswer(btn, choice, q) {
   document.querySelectorAll('#dc-cg .cbtn').forEach(b => {
     b.disabled = true;
@@ -1223,8 +1413,11 @@ function dcAnswer(btn, choice, q) {
   }
 }
 
+// dcNext() = ไปคำถาม daily ถัดไป
 function dcNext() { loadDailyQ(); }
 
+// completeDailyChallenge() = เรียกเมื่อทำ daily ครบ 10 ข้อ
+//   ให้ bonus XP, อัปเดต banner ทุกที่, แสดงหน้า complete พร้อมเสียง
 function completeDailyChallenge() {
   dcState.complete = true;
   dcState.date = todayKey();
@@ -1244,6 +1437,9 @@ function completeDailyChallenge() {
   [523,659,784,1047,1319].forEach((f,i)=>setTimeout(()=>pt(f,'sine',.15,.3),i*90));
 }
 
+// updateDCBanner() = อัปเดต Daily Challenge banner ใน quiz page
+//   เสร็จแล้ว = สีเขียว "เสร็จแล้ว"
+//   ยังไม่เสร็จ = แสดงความคืบหน้า X/10
 function updateDCBanner() {
   dcState = getDC();
   const banner = document.getElementById('dc-banner');
@@ -1270,15 +1466,31 @@ function updateDCBanner() {
 // ============================================================
 // BOSS ROUND
 // ============================================================
+// ============================================================
+// BOSS ROUND SYSTEM
+// ============================================================
+// ทุก 20 ข้อที่ตอบถูก จะมี boss ปรากฏขึ้น
+// boss คือคำที่ผิดบ่อยที่สุดใน weak words
+// ต้องตอบถูก 3 ครั้งติดกันถึงจะชนะ ถ้าผิดนับใหม่
+// ชนะ = ลบคำออกจาก weak words + รับ 20 XP
+// BOSS_TRIGGER = ตอบถูกกี่ครั้งถึง trigger boss
+// BOSS_ROUNDS  = ต้องตอบถูกกี่ครั้งติดถึงชนะ
 const BOSS_TRIGGER = 20;  // ทุกกี่ข้อที่ถูกจะ trigger boss
 const BOSS_ROUNDS  = 3;   // ต้องตอบถูกกี่ครั้งติดถึงเอาชนะ boss
 
+// bossCorrectTotal = นับข้อถูกสะสมนับตั้งแต่ boss ล่าสุด (รีเซ็ตหลัง trigger)
+// bossActive = true ขณะที่ boss overlay กำลังแสดงอยู่
+// bossWord   = คำที่กำลังเป็น boss อยู่
+// bossRound  = ตอบถูกติดกันกี่ครั้งแล้วใน boss นี้
 let bossCorrectTotal = 0; // นับข้อถูกสะสมตั้งแต่ boss ล่าสุด
 let bossActive = false;
 let bossWord = null;
 let bossRound = 0;   // ตอบถูกไปแล้วกี่ครั้งใน boss นี้
 let bossFailed = false;
 
+// checkBossTrigger() = เช็คว่าถึงเวลา trigger boss มั้ย
+//   นับ bossCorrectTotal ทุกครั้งที่ตอบถูก
+//   ถ้าถึง BOSS_TRIGGER (20) และมี weak word = เรียก showBossIntro()
 function checkBossTrigger() {
   if(bossActive) return;
   bossCorrectTotal++;
@@ -1295,6 +1507,9 @@ function checkBossTrigger() {
   }
 }
 
+// showBossIntro(q) = แสดง overlay แนะนำตัว boss
+//   q คือคำที่จะมาเป็น boss (weak word อันดับ 1)
+//   เล่นเสียง fanfare ตอนแสดง
 function showBossIntro(q) {
   bossActive = true;
   bossRound = 0;
@@ -1312,10 +1527,13 @@ function showBossIntro(q) {
   playLv();
 }
 
+// startBossRound() = เริ่มรอบ boss จริงๆ เรียกหลังกดปุ่ม 'สู้เลย!'
 function startBossRound() {
   renderBossQuestion();
 }
 
+// renderBossQuestion() = วาด UI คำถาม boss พร้อม progress dots
+//   dots แสดงว่าตอบถูกไปแล้วกี่ครั้ง (สีเหลืองคือครั้งปัจจุบัน)
 function renderBossQuestion() {
   const q = bossWord;
   const card = document.getElementById('boss-card');
@@ -1347,6 +1565,9 @@ function renderBossQuestion() {
     <div id="boss-rt" style="min-height:24px;font-size:14px;font-weight:600;margin-top:12px;text-align:center"></div>`;
 }
 
+// bossAnswer(btn, choice, correctAnswer) = ประมวลผลคำตอบ boss
+//   ถูก: bossRound++ ถ้าครบ BOSS_ROUNDS = bossVictory()
+//   ผิด: รีเซ็ต bossRound = 0 เริ่มนับใหม่
 function bossAnswer(btn, choice, correctAnswer) {
   document.querySelectorAll('#boss-card .cbtn').forEach(b => {
     b.disabled = true;
@@ -1372,6 +1593,8 @@ function bossAnswer(btn, choice, correctAnswer) {
   }
 }
 
+// bossVictory() = เรียกเมื่อชนะ boss
+//   ลบคำออกจาก weak words, บันทึก, ให้ XP 20, แสดง 'Boss Defeated!'
 function bossVictory() {
   // ลบออกจาก weak list
   if(bossWord && st.ww[bossWord.word]) {
@@ -1388,6 +1611,7 @@ function bossVictory() {
   [784,1047,1319].forEach((f,i)=>setTimeout(()=>pt(f,'sine',.2,.35),i*100));
 }
 
+// closeBoss() = ปิด boss overlay กลับไปเล่นปกติต่อ
 function closeBoss() {
   document.getElementById('boss-overlay').style.display = 'none';
   bossActive = false;
@@ -1397,6 +1621,12 @@ function closeBoss() {
 // ============================================================
 // HOME PAGE
 // ============================================================
+// ============================================================
+// HOME PAGE
+// ============================================================
+// renderHome() = อัปเดต UI ทุก element ในหน้าหลัก
+//   นับจำนวนคำและบทจริงจาก BASE + custom
+//   แสดงสถิติเซสชันปัจจุบัน (ถูก/ผิด/streak/แม่นยำ)
 function renderHome() {
   const all = [...BASE, ...custom];
   const chs = [...new Set(all.map(v => v.chapter))].length;
@@ -1410,6 +1640,8 @@ function renderHome() {
   updateHomeDCBanner();
 }
 
+// updateHomeDCBanner() = อัปเดต Daily Challenge banner ในหน้าหลัก
+//   sync สถานะเดียวกับ banner ใน quiz page
 function updateHomeDCBanner() {
   const dc = getDC();
   const icon  = document.getElementById('dc-home-icon');
@@ -1433,17 +1665,25 @@ function updateHomeDCBanner() {
   }
 }
 
-// hook: อัปเดต home stats ทุกครั้งที่ตอบข้อ
+// hook: override updPills() เพื่อให้ home page อัปเดตสถิติด้วยทุกครั้งที่ตอบข้อ
+// ใช้ pattern function wrapping (ไม่ใช้ replace เพราะ updPills ใช้ที่อื่นด้วย)
 const _origUpdPills = updPills;
 updPills = function() {
   _origUpdPills();
   if(document.getElementById('page-home').classList.contains('active')) renderHome();
 };
 
-updateDCBanner();
-updateHomeDCBanner();
-updXP(); updPills(); loadQ(); renderChTabs(); renderTbl();
-renderHome();
+// ============================================================
+// INITIALIZATION (เรียกตอนโหลดหน้าครั้งแรก)
+// ============================================================
+updateDCBanner();       // อัปเดต daily banner ใน quiz page
+updateHomeDCBanner();   // อัปเดต daily banner ในหน้าหลัก
+updXP();                // แสดง level และ XP bar ใน nav
+updPills();             // แสดงคะแนนเริ่มต้น (0/0/0/0)
+loadQ();                // โหลดคำถามแรก
+renderChTabs();         // สร้าง chapter checkbox ในหน้า manage
+renderTbl();            // สร้างตาราง vocab ในหน้า manage
+renderHome();           // แสดงข้อมูลหน้าหลัก
 
 </script>
 </body>
