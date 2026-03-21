@@ -125,6 +125,25 @@ nav{position:sticky;top:0;z-index:100;background:rgba(10,10,18,.92);backdrop-fil
 .db{background:none;border:none;color:var(--mu);cursor:pointer;font-size:13px;padding:2px 4px;border-radius:4px;}
 .db:hover{color:var(--rd);}
 .cbg{background:rgba(247,199,106,.15);border:1px solid rgba(247,199,106,.3);border-radius:7px;padding:1px 5px;font-size:9px;color:var(--yw);}
+/* HOME PAGE */
+.home-wrap{min-height:calc(100vh - 56px);padding:20px;max-width:500px;margin:0 auto;}
+.home-greet{margin-bottom:20px;padding-top:8px;}
+.home-label{font-size:11px;color:var(--mu);text-transform:uppercase;letter-spacing:1px;margin-bottom:5px;}
+.home-name{font-size:24px;font-weight:700;}
+.home-sub{font-size:13px;color:var(--mu);margin-top:3px;}
+.home-section{font-size:11px;color:var(--mu);text-transform:uppercase;letter-spacing:1px;margin:18px 0 10px;}
+.home-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:4px;}
+.home-card{background:var(--card);border:1px solid var(--brd);border-radius:16px;padding:16px 14px;cursor:pointer;transition:all .15s;position:relative;overflow:hidden;text-align:left;}
+.home-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:var(--hc);}
+.home-card:hover{border-color:rgba(255,255,255,.15);transform:translateY(-2px);}
+.home-card:active{transform:translateY(0);}
+.home-card-icon{font-size:24px;display:block;margin-bottom:7px;}
+.home-card-name{font-size:14px;font-weight:700;color:var(--tx);margin-bottom:3px;}
+.home-card-desc{font-size:11px;color:var(--mu);line-height:1.4;}
+.home-stats{display:flex;gap:8px;}
+.home-stat{flex:1;background:var(--card);border:1px solid var(--brd);border-radius:12px;padding:10px;text-align:center;}
+.home-stat-num{font-family:var(--fen);font-size:20px;font-weight:700;display:block;}
+.home-stat-lbl{font-size:10px;color:var(--mu);margin-top:2px;}
 /* DAILY CHALLENGE BANNER */
 .dc-banner{max-width:480px;width:100%;background:linear-gradient(135deg,rgba(124,106,247,.18),rgba(247,106,140,.12));border:1px solid rgba(124,106,247,.4);border-radius:16px;padding:14px 18px;display:flex;align-items:center;gap:12px;cursor:pointer;transition:all .2s;}
 .dc-banner:hover{border-color:var(--ac);transform:translateY(-1px);}
@@ -172,7 +191,8 @@ nav{position:sticky;top:0;z-index:100;background:rgba(10,10,18,.92);backdrop-fil
 <body>
 <nav>
   <div class="logo">VOCAB<span>MASTER</span></div>
-  <button class="ntab active" onclick="showPage('quiz',this)">&#127919; Quiz</button>
+  <button class="ntab active" onclick="showPage('home',this)" id="home-tab">&#127968; หน้าหลัก</button>
+  <button class="ntab" onclick="showPage('quiz',this)">&#127919; Quiz</button>
   <button class="ntab" onclick="showPage('flash',this)">&#127183; Flash</button>
   <button class="ntab" onclick="showPage('stats',this)">&#128202; Stats</button>
   <button class="ntab" onclick="showPage('manage',this)">&#9881; จัดการ</button>
@@ -180,7 +200,60 @@ nav{position:sticky;top:0;z-index:100;background:rgba(10,10,18,.92);backdrop-fil
   <div class="xpn"><span class="xplv" id="nlv">Lv.1</span><div class="xptr"><div class="xpfi" id="nxp" style="width:0%"></div></div></div>
 </nav>
 
-<div id="page-quiz" class="page active">
+<!-- HOME PAGE -->
+<div id="page-home" class="page active">
+  <div class="home-wrap">
+    <div class="home-greet">
+      <div class="home-label">ยินดีต้อนรับ</div>
+      <div class="home-name">RAM1111 &#128075;</div>
+      <div class="home-sub" id="home-sub">กำลังโหลด...</div>
+    </div>
+
+    <!-- Daily Banner -->
+    <div class="dc-banner" id="dc-banner-home" onclick="showPage('daily',document.getElementById('daily-tab'))">
+      <div class="dc-icon" id="dc-home-icon">&#127775;</div>
+      <div class="dc-info">
+        <div class="dc-title" id="dc-home-title">Daily Challenge วันนี้</div>
+        <div class="dc-sub" id="dc-home-sub">ทำข้อสอบ 10 ข้อ รับ XP พิเศษ!</div>
+      </div>
+      <div class="dc-prog" id="dc-home-prog">0/10</div>
+    </div>
+
+    <div class="home-section">เมนูหลัก</div>
+    <div class="home-grid">
+      <div class="home-card" style="--hc:linear-gradient(90deg,#7c6af7,#f76a8c)" onclick="showPage('quiz',document.querySelectorAll('.ntab')[1])">
+        <span class="home-card-icon">&#127919;</span>
+        <div class="home-card-name">Quiz</div>
+        <div class="home-card-desc">4 ตัวเลือก · พิมพ์ตอบ · Time Attack</div>
+      </div>
+      <div class="home-card" style="--hc:linear-gradient(90deg,#f76a8c,#f7c76a)" onclick="showPage('flash',document.querySelectorAll('.ntab')[2])">
+        <span class="home-card-icon">&#127183;</span>
+        <div class="home-card-name">Flashcard</div>
+        <div class="home-card-desc">พลิกการ์ดทบทวนคำศัพท์</div>
+      </div>
+      <div class="home-card" style="--hc:linear-gradient(90deg,#3dd68c,#7c6af7)" onclick="showPage('stats',document.querySelectorAll('.ntab')[3])">
+        <span class="home-card-icon">&#128202;</span>
+        <div class="home-card-name">สถิติ</div>
+        <div class="home-card-desc">XP · Streak · ความแม่นยำต่อบท</div>
+      </div>
+      <div class="home-card" style="--hc:linear-gradient(90deg,#f7c76a,#3dd68c)" onclick="showPage('manage',document.querySelectorAll('.ntab')[4])">
+        <span class="home-card-icon">&#9881;</span>
+        <div class="home-card-name">จัดการ Vocab</div>
+        <div class="home-card-desc">เลือก Chapter · เพิ่มคำเอง</div>
+      </div>
+    </div>
+
+    <div class="home-section">สถิติวันนี้</div>
+    <div class="home-stats">
+      <div class="home-stat"><span class="home-stat-num" style="color:var(--gn)" id="hst-c">0</span><div class="home-stat-lbl">ถูก</div></div>
+      <div class="home-stat"><span class="home-stat-num" style="color:var(--rd)" id="hst-w">0</span><div class="home-stat-lbl">ผิด</div></div>
+      <div class="home-stat"><span class="home-stat-num" style="color:var(--yw)" id="hst-s">0</span><div class="home-stat-lbl">Streak</div></div>
+      <div class="home-stat"><span class="home-stat-num" style="color:var(--ac)" id="hst-a">-</span><div class="home-stat-lbl">แม่นยำ</div></div>
+    </div>
+  </div>
+</div>
+
+<div id="page-quiz" class="page">
   <div class="wrap">
     <div class="mrow">
       <button class="mbtn active" onclick="setMode('mc',this)"><span class="mi">&#128292;</span>4 ตัวเลือก</button>
@@ -438,7 +511,7 @@ const BASE=[
 {word:"popular",pron:"ป็อพพิวเลอร์",answer:"เป็นที่นิยม",chapter:6},
 {word:"audience",pron:"ออดิเอ้นซ์",answer:"ผู้ชม, ผู้ฟัง",chapter:6},
 {word:"explore",pron:"เอ็กซ์พลอร์",answer:"สำรวจ",chapter:7},
-{word:"determine",pron:"ดีเทอร์มิน",answer:"กำหนด, ตัดสินใจ",chapter:7},
+{word:"determine",pron:"ดีเทอร์มิน",answer:"กำหนด",chapter:7},
 {word:"destination",pron:"เดสทิเนชั่น",answer:"จุดหมาย",chapter:7},
 {word:"mention",pron:"เมนชั่น",answer:"กล่าวถึง",chapter:7},
 {word:"infinite",pron:"อินฟินิท",answer:"ไม่มีที่สิ้นสุด",chapter:7},
@@ -1222,8 +1295,63 @@ function closeBoss() {
   bossWord = null;
 }
 
+// ============================================================
+// HOME PAGE
+// ============================================================
+function renderHome() {
+  const all = [...BASE, ...custom];
+  const chs = [...new Set(all.map(v => v.chapter))].length;
+  document.getElementById('home-sub').textContent =
+    'คำศัพท์ทั้งหมด ' + all.length + ' คำ · ' + chs + ' บท';
+  const t = sc + wc;
+  document.getElementById('hst-c').textContent = sc;
+  document.getElementById('hst-w').textContent = wc;
+  document.getElementById('hst-s').textContent = mstrk;
+  document.getElementById('hst-a').textContent = t ? Math.round(sc/t*100)+'%' : '-';
+  updateHomeDCBanner();
+}
+
+function updateHomeDCBanner() {
+  const dc = getDC();
+  const icon  = document.getElementById('dc-home-icon');
+  const title = document.getElementById('dc-home-title');
+  const sub   = document.getElementById('dc-home-sub');
+  const prog  = document.getElementById('dc-home-prog');
+  const banner= document.getElementById('dc-banner-home');
+  if(!banner) return;
+  if(dc.complete) {
+    banner.className = 'dc-banner dc-done';
+    icon.textContent  = '✅';
+    title.textContent = 'Daily Challenge เสร็จแล้ว!';
+    sub.textContent   = 'ตอบถูก ' + dc.correct + '/10 ข้อ · มาใหม่พรุ่งนี้';
+    prog.textContent  = '🏆';
+  } else {
+    banner.className  = 'dc-banner';
+    icon.textContent  = '🌟';
+    title.textContent = 'Daily Challenge วันนี้';
+    sub.textContent   = 'ทำอีก ' + (DC_TOTAL - dc.done) + ' ข้อ รับ +' + DC_BONUS_XP + ' XP!';
+    prog.textContent  = dc.done + '/10';
+  }
+}
+
+// hook: อัปเดต home stats ทุกครั้งที่ตอบข้อ
+const _origUpdPills = updPills;
+updPills = function() {
+  _origUpdPills();
+  if(document.getElementById('page-home').classList.contains('active')) renderHome();
+};
+
+// update showPage to handle home
+const _origShowPage = showPage;
+showPage = function(id, el) {
+  _origShowPage(id, el);
+  if(id === 'home') renderHome();
+};
+
 updateDCBanner();
+updateHomeDCBanner();
 updXP(); updPills(); loadQ(); renderChTabs(); renderTbl();
+renderHome();
 
 </script>
 </body>
