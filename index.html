@@ -460,6 +460,36 @@ let st={...{c:0,w:0,ms:0,h:[],ww:{},cs:{},xp:0},...JSON.parse(localStorage.getIt
 let sc=0,wc=0,strk=0,mstrk=st.ms||0,ans=false,curQ=null,lastQ=null,mode='mc';
 let tmr=null,tl=10;
 
+// --- Shuffle Deck (ไม่ซ้ำจนครบ แล้วค่อยสุ่มมั่ว) ---
+let mcDeck=[],mcRound=0; // round=0: ยังอยู่ใน deck round, round>0: สุ่มอิสระ
+function buildDeck(){
+  const p=pool();
+  mcDeck=p.slice().sort(()=>Math.random()-.5);
+  mcRound++;
+}
+function pickQ(){
+  // โหมด type/time ยังสุ่มปกติ (อาจซ้ำ)
+  if(mode!=='mc'){
+    const wk=Object.entries(st.ww).filter(([,v])=>v>=2)
+      .map(([k])=>pool().find(q=>q.word===k)).filter(Boolean);
+    let p=(Math.random()<.35&&wk.length)?wk:pool();
+    let q,t=0;
+    do{q=p[Math.floor(Math.random()*p.length)];t++;}while(q===lastQ&&t<20);
+    lastQ=q; return q;
+  }
+  // โหมด mc: ใช้ deck
+  if(mcRound===0) buildDeck(); // ครั้งแรก
+  if(mcDeck.length===0){
+    // ครบรอบแล้ว → สุ่มอิสระตลอดไป
+    const p=pool();
+    let q,t=0;
+    do{q=p[Math.floor(Math.random()*p.length)];t++;}while(q===lastQ&&t<20);
+    lastQ=q; return q;
+  }
+  const q=mcDeck.shift();
+  lastQ=q; return q;
+}
+
 const LVS=[
   {l:1,n:'Beginner',x:0,nx:100},{l:2,n:'Learner',x:100,nx:250},
   {l:3,n:'Student',x:250,nx:500},{l:4,n:'Scholar',x:500,nx:900},
@@ -513,14 +543,7 @@ function pool(){
   const f=all.filter(v=>selCh.includes(v.chapter));
   return f.length?f:all;
 }
-function pickQ(){
-  const wk=Object.entries(st.ww).filter(([,v])=>v>=2)
-    .map(([k])=>pool().find(q=>q.word===k)).filter(Boolean);
-  let p=(Math.random()<.35&&wk.length)?wk:pool();
-  let q,t=0;
-  do{q=p[Math.floor(Math.random()*p.length)];t++;}while(q===lastQ&&t<20);
-  lastQ=q; return q;
-}
+
 function getChoices(c){
   const ch=[c.answer];
   const p=pool().map(q=>q.answer).filter(a=>a!==c.answer);
@@ -533,6 +556,7 @@ function getChoices(c){
 
 function setMode(m,el){
   mode=m; clrTmr();
+  if(m==='mc'){mcDeck=[];mcRound=0;} // รีเซ็ต deck เมื่อกลับมาโหมด MC
   document.querySelectorAll('.mbtn').forEach(b=>b.classList.remove('active'));
   el.classList.add('active'); loadQ();
 }
@@ -741,6 +765,7 @@ function applyFilter(){
   const chk=[...document.querySelectorAll('#ctabs input:checked')].map(el=>Number(el.value));
   selCh=chk.length?chk:null;
   localStorage.setItem('sc',JSON.stringify(selCh));
+  mcDeck=[];mcRound=0; // รีเซ็ต deck เมื่อเปลี่ยน chapter
   alert('✅ บันทึกแล้ว');
 }
 function addWord(){
