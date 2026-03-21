@@ -125,6 +125,47 @@ nav{position:sticky;top:0;z-index:100;background:rgba(10,10,18,.92);backdrop-fil
 .db{background:none;border:none;color:var(--mu);cursor:pointer;font-size:13px;padding:2px 4px;border-radius:4px;}
 .db:hover{color:var(--rd);}
 .cbg{background:rgba(247,199,106,.15);border:1px solid rgba(247,199,106,.3);border-radius:7px;padding:1px 5px;font-size:9px;color:var(--yw);}
+/* DAILY CHALLENGE BANNER */
+.dc-banner{max-width:480px;width:100%;background:linear-gradient(135deg,rgba(124,106,247,.18),rgba(247,106,140,.12));border:1px solid rgba(124,106,247,.4);border-radius:16px;padding:14px 18px;display:flex;align-items:center;gap:12px;cursor:pointer;transition:all .2s;}
+.dc-banner:hover{border-color:var(--ac);transform:translateY(-1px);}
+.dc-icon{font-size:28px;flex-shrink:0;}
+.dc-info{flex:1;}
+.dc-title{font-size:13px;font-weight:700;color:var(--tx);}
+.dc-sub{font-size:11px;color:var(--mu);margin-top:2px;}
+.dc-prog{font-family:var(--fen);font-size:20px;font-weight:700;color:var(--yw);flex-shrink:0;}
+.dc-done{background:linear-gradient(135deg,rgba(61,214,140,.12),rgba(61,214,140,.06));border-color:rgba(61,214,140,.4);}
+.dc-done .dc-title{color:var(--gn);}
+.dc-done .dc-prog{color:var(--gn);}
+/* DAILY CHALLENGE PAGE */
+.dc-wrap{min-height:calc(100vh - 56px);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:18px;gap:14px;}
+.dc-pbar-wrap{max-width:480px;width:100%;}
+.dc-pbar-row{display:flex;justify-content:space-between;font-size:12px;color:var(--mu);margin-bottom:6px;}
+.dc-pbar-track{height:8px;background:rgba(255,255,255,.08);border-radius:4px;overflow:hidden;}
+.dc-pbar-fill{height:100%;background:linear-gradient(90deg,var(--ac),var(--ac2));border-radius:4px;transition:width .4s ease;}
+/* BOSS ROUND */
+.boss-overlay{position:fixed;inset:0;z-index:300;background:rgba(0,0,0,.88);display:flex;align-items:center;justify-content:center;animation:bfade .3s ease;}
+@keyframes bfade{from{opacity:0}to{opacity:1}}
+.boss-card{background:linear-gradient(135deg,#1a0a2e,#2a0a18);border:2px solid var(--rd);border-radius:22px;padding:28px 22px;max-width:380px;width:90%;text-align:center;animation:bscale .4s ease;}
+@keyframes bscale{from{transform:scale(.8);opacity:0}to{transform:scale(1);opacity:1}}
+.boss-icon{font-size:60px;display:block;margin-bottom:10px;}
+.boss-title{font-size:22px;font-weight:700;color:var(--rd);margin-bottom:6px;}
+.boss-sub{font-size:13px;color:var(--mu);margin-bottom:16px;line-height:1.6;}
+.boss-word{font-family:var(--fen);font-size:24px;font-weight:700;color:var(--tx);background:rgba(255,255,255,.06);border-radius:12px;padding:12px 18px;margin-bottom:18px;}
+.boss-pron{font-size:12px;color:var(--ac);margin-top:-10px;margin-bottom:16px;}
+.boss-start{background:linear-gradient(135deg,var(--rd),#a93226);border:none;border-radius:12px;padding:12px 32px;color:white;font-family:var(--fth);font-size:15px;font-weight:700;cursor:pointer;}
+.boss-dots{display:flex;gap:8px;justify-content:center;max-width:480px;}
+.boss-dot{width:11px;height:11px;border-radius:50%;background:rgba(255,255,255,.12);transition:all .3s;}
+.boss-dot.ok{background:var(--gn);}
+.boss-dot.no{background:var(--rd);}
+.boss-dot.cur{background:var(--yw);box-shadow:0 0 8px var(--yw);}
+/* COMPLETE SCREEN */
+.complete-wrap{min-height:calc(100vh - 56px);display:flex;align-items:center;justify-content:center;padding:18px;}
+.complete-card{background:var(--card);border:1px solid var(--gn);border-radius:22px;padding:32px 26px;max-width:420px;width:100%;text-align:center;}
+.complete-icon{font-size:64px;display:block;margin-bottom:12px;}
+.complete-title{font-size:22px;font-weight:700;color:var(--gn);margin-bottom:6px;}
+.complete-sub{font-size:14px;color:var(--mu);margin-bottom:18px;}
+.xp-badge{display:inline-block;background:rgba(247,199,106,.15);border:1px solid rgba(247,199,106,.4);border-radius:20px;padding:6px 18px;font-family:var(--fen);font-size:20px;font-weight:700;color:var(--yw);margin-bottom:20px;}
+.back-btn{background:var(--ac);border:none;border-radius:11px;padding:11px 28px;color:white;font-family:var(--fth);font-size:14px;font-weight:600;cursor:pointer;}
 @media(max-width:400px){.word{font-size:21px;}.cgrid{grid-template-columns:1fr;}.sgrid{grid-template-columns:repeat(2,1fr);}.ntab{font-size:11px;padding:0 7px;}.xpn{display:none;}}
 </style>
 </head>
@@ -135,6 +176,7 @@ nav{position:sticky;top:0;z-index:100;background:rgba(10,10,18,.92);backdrop-fil
   <button class="ntab" onclick="showPage('flash',this)">&#127183; Flash</button>
   <button class="ntab" onclick="showPage('stats',this)">&#128202; Stats</button>
   <button class="ntab" onclick="showPage('manage',this)">&#9881; จัดการ</button>
+  <button class="ntab" onclick="showPage('daily',this)" id="daily-tab">&#127775; Daily</button>
   <div class="xpn"><span class="xplv" id="nlv">Lv.1</span><div class="xptr"><div class="xpfi" id="nxp" style="width:0%"></div></div></div>
 </nav>
 
@@ -144,6 +186,15 @@ nav{position:sticky;top:0;z-index:100;background:rgba(10,10,18,.92);backdrop-fil
       <button class="mbtn active" onclick="setMode('mc',this)"><span class="mi">&#128292;</span>4 ตัวเลือก</button>
       <button class="mbtn" onclick="setMode('type',this)"><span class="mi">&#128221;</span>พิมพ์ตอบ</button>
       <button class="mbtn" onclick="setMode('time',this)"><span class="mi">&#9201;</span>Time Attack</button>
+    </div>
+    <!-- Daily Challenge Banner -->
+    <div class="dc-banner" id="dc-banner" onclick="showPage('daily',document.getElementById('daily-tab'))">
+      <div class="dc-icon" id="dc-banner-icon">&#127775;</div>
+      <div class="dc-info">
+        <div class="dc-title" id="dc-banner-title">Daily Challenge วันนี้</div>
+        <div class="dc-sub" id="dc-banner-sub">ทำข้อสอบ 10 ข้อ รับ XP พิเศษ!</div>
+      </div>
+      <div class="dc-prog" id="dc-banner-prog">0/10</div>
     </div>
     <div class="sbar"><span class="sfr">&#128293;</span><span class="snum" id="snum">0</span><span>ติดกัน</span></div>
     <div class="pills">
@@ -255,8 +306,21 @@ nav{position:sticky;top:0;z-index:100;background:rgba(10,10,18,.92);backdrop-fil
   </div>
 </div>
 
-<script>
+<!-- DAILY CHALLENGE PAGE -->
+<div id="page-daily" class="page">
+  <div class="dc-wrap" id="dc-wrap">
+    <!-- filled by JS -->
+  </div>
+</div>
 
+<!-- BOSS ROUND OVERLAY (hidden) -->
+<div class="boss-overlay" id="boss-overlay" style="display:none">
+  <div class="boss-card" id="boss-card">
+    <!-- filled by JS -->
+  </div>
+</div>
+
+<script>
 const BASE=[
 {word:"think tank",pron:"ธิ้งค์ แท้งค์",answer:"มันสมอง, องค์กรวิจัย",chapter:1},
 {word:"appearance",pron:"อะเพียแรนซ์",answer:"การปรากฏขึ้น",chapter:1},
@@ -374,7 +438,7 @@ const BASE=[
 {word:"popular",pron:"ป็อพพิวเลอร์",answer:"เป็นที่นิยม",chapter:6},
 {word:"audience",pron:"ออดิเอ้นซ์",answer:"ผู้ชม, ผู้ฟัง",chapter:6},
 {word:"explore",pron:"เอ็กซ์พลอร์",answer:"สำรวจ",chapter:7},
-{word:"determine",pron:"ดีเทอร์มิน",answer:"กำหนด",chapter:7},
+{word:"determine",pron:"ดีเทอร์มิน",answer:"กำหนด, ตัดสินใจ",chapter:7},
 {word:"destination",pron:"เดสทิเนชั่น",answer:"จุดหมาย",chapter:7},
 {word:"mention",pron:"เมนชั่น",answer:"กล่าวถึง",chapter:7},
 {word:"infinite",pron:"อินฟินิท",answer:"ไม่มีที่สิ้นสุด",chapter:7},
@@ -651,6 +715,7 @@ function handle(ok,btn){
     if(st.ww[curQ.word])delete st.ww[curQ.word];
     const xp=(mode==='time'?15:mode==='type'?12:10)+(strk>=5?5:strk>=3?2:0);
     addXP(xp);
+    if(!isDailyMode) checkBossTrigger();
   } else {
     if(btn)btn.classList.add('wrong');
     wc++; strk=0;
@@ -809,14 +874,16 @@ function renderTbl(){
 }
 
 // --- NAV ---
-function showPage(id,el){
+function showPage(id,el) {
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   document.querySelectorAll('.ntab').forEach(t=>t.classList.remove('active'));
   document.getElementById('page-'+id).classList.add('active');
   el.classList.add('active');
+  isDailyMode = (id === 'daily');
   if(id==='stats')renderStats();
   if(id==='manage'){renderChTabs();renderTbl();}
   if(id==='flash')initFlash();
+  if(id==='daily')renderDailyPage();
   if(id!=='quiz')clrTmr();
 }
 
@@ -839,6 +906,323 @@ document.getElementById('ti').addEventListener('keydown',e=>{
   if(e.code==='Enter'){e.preventDefault();subType();}
 });
 
+// ============================================================
+// DAILY CHALLENGE
+// ============================================================
+const DC_TOTAL = 10;
+const DC_BONUS_XP = 50;
+
+function todayKey() {
+  const d = new Date();
+  return d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate();
+}
+function getDC() {
+  const raw = localStorage.getItem('dc');
+  const def = {date:'',done:0,correct:0,complete:false};
+  if(!raw) return def;
+  const saved = JSON.parse(raw);
+  if(saved.date !== todayKey()) return {...def, date: todayKey()};
+  return saved;
+}
+function saveDC(dc) { localStorage.setItem('dc', JSON.stringify(dc)); }
+
+let dcState = getDC();
+let dcQuestions = []; // 10 คำสุ่มสำหรับวันนี้
+let dcIdx = 0;        // ข้อปัจจุบันใน daily
+let dcCorrect = 0;
+let isDailyMode = false;
+
+function buildDailyQuestions() {
+  // สุ่มคำด้วย seed จากวันที่ (ทุกคนได้คำชุดเดียวกันในวันเดียวกัน)
+  const p = pool();
+  const shuffled = p.slice().sort(() => {
+    // pseudo-seed from today's date
+    const seed = parseInt(todayKey().replace(/-/g,''));
+    return Math.sin(seed * p.indexOf(p[Math.floor(Math.random()*p.length)])) - 0.5;
+  });
+  return shuffled.slice(0, Math.min(DC_TOTAL, shuffled.length));
+}
+
+function renderDailyPage() {
+  dcState = getDC();
+  const wrap = document.getElementById('dc-wrap');
+
+  if(dcState.complete) {
+    // จบแล้ววันนี้
+    wrap.innerHTML = `
+      <div class="complete-card">
+        <span class="complete-icon">&#127881;</span>
+        <div class="complete-title">Daily Challenge สำเร็จ!</div>
+        <div class="complete-sub">วันนี้ตอบถูก ${dcState.correct}/${DC_TOTAL} ข้อ<br>มาใหม่พรุ่งนี้นะ!</div>
+        <div class="xp-badge">+${DC_BONUS_XP} XP</div><br>
+        <button class="back-btn" onclick="showPage('quiz',document.querySelector('.ntab'))">&#8592; กลับหน้าหลัก</button>
+      </div>`;
+    return;
+  }
+
+  // ยังไม่จบ
+  dcQuestions = buildDailyQuestions();
+  dcIdx = dcState.done;
+  dcCorrect = dcState.correct;
+  isDailyMode = true;
+
+  const pct = Math.round((dcState.done / DC_TOTAL) * 100);
+  wrap.innerHTML = `
+    <div style="text-align:center;max-width:480px;width:100%">
+      <div style="font-size:52px;margin-bottom:8px">&#127775;</div>
+      <div style="font-size:20px;font-weight:700;margin-bottom:4px">Daily Challenge</div>
+      <div style="font-size:13px;color:var(--mu);margin-bottom:20px">ทำให้ครบ ${DC_TOTAL} ข้อ รับ <span style="color:var(--yw);font-weight:700">+${DC_BONUS_XP} XP</span> พิเศษ!</div>
+    </div>
+    <div class="dc-pbar-wrap">
+      <div class="dc-pbar-row"><span>ความคืบหน้าวันนี้</span><span style="font-family:var(--fen)">${dcState.done}/${DC_TOTAL}</span></div>
+      <div class="dc-pbar-track"><div class="dc-pbar-fill" style="width:${pct}%"></div></div>
+    </div>
+    <div class="qcard" style="max-width:480px;width:100%">
+      <div class="chbg" id="dc-chb">&#127775; Daily Challenge</div>
+      <div class="word" id="dc-wd">Loading...</div>
+      <div class="pron" id="dc-pr"></div>
+      <div class="cgrid" id="dc-cg"></div>
+      <div class="rrow"><div class="rtxt" id="dc-rt"></div><button class="nbtn" id="dc-nb" onclick="dcNext()" style="display:none">ต่อไป &#8594;</button></div>
+    </div>
+    <div style="font-size:12px;color:var(--mu)">ข้อที่ <span id="dc-qnum">${dcIdx+1}</span> / ${DC_TOTAL}</div>`;
+
+  loadDailyQ();
+}
+
+function loadDailyQ() {
+  if(dcIdx >= dcQuestions.length) { completeDailyChallenge(); return; }
+  const q = dcQuestions[dcIdx];
+  document.getElementById('dc-wd').textContent = q.word;
+  document.getElementById('dc-pr').textContent = q.pron ? '[ '+q.pron+' ]' : '';
+  document.getElementById('dc-chb').textContent = '&#128218; Chapter ' + (q.chapter||'?');
+  document.getElementById('dc-rt').textContent = '';
+  document.getElementById('dc-nb').style.display = 'none';
+  if(document.getElementById('dc-qnum')) document.getElementById('dc-qnum').textContent = dcIdx+1;
+
+  const ch = [q.answer];
+  const p = pool().map(v=>v.answer).filter(a=>a!==q.answer);
+  while(ch.length<4&&p.length) ch.push(p.splice(Math.floor(Math.random()*p.length),1)[0]);
+  ch.sort(()=>Math.random()-.5);
+
+  const g = document.getElementById('dc-cg');
+  g.innerHTML = '';
+  ch.forEach(c => {
+    const b = document.createElement('button');
+    b.className = 'cbtn'; b.textContent = c;
+    b.onclick = () => dcAnswer(b, c, q);
+    g.appendChild(b);
+  });
+}
+
+function dcAnswer(btn, choice, q) {
+  document.querySelectorAll('#dc-cg .cbtn').forEach(b => {
+    b.disabled = true;
+    if(b.textContent === q.answer) b.classList.add('correct');
+  });
+  const ok = choice === q.answer;
+  const rt = document.getElementById('dc-rt');
+  if(ok) {
+    dcCorrect++;
+    rt.textContent = '✅ ถูกต้อง!'; rt.className = 'rtxt ok';
+    playOk();
+  } else {
+    btn.classList.add('wrong');
+    rt.textContent = '❌ ' + q.answer; rt.className = 'rtxt no';
+    playNg();
+  }
+  dcIdx++;
+  dcState.done = dcIdx;
+  dcState.correct = dcCorrect;
+  dcState.date = todayKey();
+  saveDC(dcState);
+  updateDCBanner();
+
+  // อัพ progress bar
+  const pct = Math.round((dcIdx / DC_TOTAL) * 100);
+  const fill = document.querySelector('.dc-pbar-fill');
+  if(fill) fill.style.width = pct + '%';
+  const row = document.querySelector('.dc-pbar-row span:last-child');
+  if(row) row.textContent = dcIdx + '/' + DC_TOTAL;
+
+  if(dcIdx >= DC_TOTAL) {
+    setTimeout(completeDailyChallenge, 800);
+  } else {
+    document.getElementById('dc-nb').style.display = 'block';
+  }
+}
+
+function dcNext() { loadDailyQ(); }
+
+function completeDailyChallenge() {
+  dcState.complete = true;
+  dcState.date = todayKey();
+  saveDC(dcState);
+  addXP(DC_BONUS_XP);
+  updateDCBanner();
+  // แสดงหน้าสำเร็จ
+  const wrap = document.getElementById('dc-wrap');
+  wrap.innerHTML = `
+    <div class="complete-card">
+      <span class="complete-icon">&#127881;</span>
+      <div class="complete-title">Daily Challenge สำเร็จ!</div>
+      <div class="complete-sub">วันนี้ตอบถูก ${dcCorrect}/${DC_TOTAL} ข้อ &#127775;<br>มาใหม่พรุ่งนี้นะ!</div>
+      <div class="xp-badge">+${DC_BONUS_XP} XP</div><br>
+      <button class="back-btn" onclick="showPage('quiz',document.querySelectorAll('.ntab')[0])">&#8592; กลับหน้าหลัก</button>
+    </div>`;
+  [523,659,784,1047,1319].forEach((f,i)=>setTimeout(()=>pt(f,'sine',.15,.3),i*90));
+}
+
+function updateDCBanner() {
+  dcState = getDC();
+  const banner = document.getElementById('dc-banner');
+  const title = document.getElementById('dc-banner-title');
+  const sub = document.getElementById('dc-banner-sub');
+  const prog = document.getElementById('dc-banner-prog');
+  const icon = document.getElementById('dc-banner-icon');
+  if(!banner) return;
+  if(dcState.complete) {
+    banner.className = 'dc-banner dc-done';
+    icon.textContent = '✅';
+    title.textContent = 'Daily Challenge เสร็จแล้ว!';
+    sub.textContent = 'ตอบถูก ' + dcState.correct + '/' + DC_TOTAL + ' ข้อ · มาใหม่พรุ่งนี้';
+    prog.textContent = '🏆';
+  } else {
+    banner.className = 'dc-banner';
+    icon.textContent = '🌟';
+    title.textContent = 'Daily Challenge วันนี้';
+    sub.textContent = `ทำอีก ${DC_TOTAL - dcState.done} ข้อ รับ +${DC_BONUS_XP} XP!`;
+    prog.textContent = dcState.done + '/' + DC_TOTAL;
+  }
+}
+
+// ============================================================
+// BOSS ROUND
+// ============================================================
+const BOSS_TRIGGER = 20;  // ทุกกี่ข้อที่ถูกจะ trigger boss
+const BOSS_ROUNDS  = 3;   // ต้องตอบถูกกี่ครั้งติดถึงเอาชนะ boss
+
+let bossCorrectTotal = 0; // นับข้อถูกสะสมตั้งแต่ boss ล่าสุด
+let bossActive = false;
+let bossWord = null;
+let bossRound = 0;   // ตอบถูกไปแล้วกี่ครั้งใน boss นี้
+let bossFailed = false;
+
+function checkBossTrigger() {
+  if(bossActive) return;
+  bossCorrectTotal++;
+  if(bossCorrectTotal >= BOSS_TRIGGER) {
+    // หา weak word ที่ผิดบ่อยที่สุด
+    const weak = Object.entries(st.ww).sort((a,b)=>b[1]-a[1]);
+    if(weak.length === 0) { bossCorrectTotal = 0; return; } // ไม่มี weak word
+    const [word] = weak[0];
+    const q = pool().find(v => v.word === word);
+    if(!q) { bossCorrectTotal = 0; return; }
+    bossCorrectTotal = 0;
+    bossWord = q;
+    showBossIntro(q);
+  }
+}
+
+function showBossIntro(q) {
+  bossActive = true;
+  bossRound = 0;
+  bossFailed = false;
+  const overlay = document.getElementById('boss-overlay');
+  const card = document.getElementById('boss-card');
+  card.innerHTML = `
+    <span class="boss-icon">&#128123;</span>
+    <div class="boss-title">Boss Round!</div>
+    <div class="boss-sub">คำนี้คุณตอบผิดบ่อย<br>ตอบให้ถูก <strong>${BOSS_ROUNDS} ครั้งติดกัน</strong> เพื่อกำจัดมัน!</div>
+    <div class="boss-word">${q.word}</div>
+    ${q.pron ? '<div class="boss-pron">[ '+q.pron+' ]</div>' : ''}
+    <button class="boss-start" onclick="startBossRound()">&#9876; สู้เลย!</button>`;
+  overlay.style.display = 'flex';
+  playLv();
+}
+
+function startBossRound() {
+  renderBossQuestion();
+}
+
+function renderBossQuestion() {
+  const q = bossWord;
+  const card = document.getElementById('boss-card');
+
+  // สร้าง dots
+  let dots = '';
+  for(let i=0;i<BOSS_ROUNDS;i++) {
+    let cls = 'boss-dot';
+    if(i < bossRound) cls += ' ok';
+    else if(i === bossRound) cls += ' cur';
+    dots += `<div class="${cls}"></div>`;
+  }
+
+  const ch = [q.answer];
+  const p = pool().map(v=>v.answer).filter(a=>a!==q.answer);
+  while(ch.length<4&&p.length) ch.push(p.splice(Math.floor(Math.random()*p.length),1)[0]);
+  ch.sort(()=>Math.random()-.5);
+
+  const btns = ch.map(c =>
+    `<button class="cbtn" style="margin:4px 0" onclick="bossAnswer(this,'${c.replace(/'/g,"\\'")}','${q.answer.replace(/'/g,"\\'")}')">${c}</button>`
+  ).join('');
+
+  card.innerHTML = `
+    <div style="display:flex;gap:6px;justify-content:center;margin-bottom:14px">${dots}</div>
+    <div class="boss-title" style="font-size:16px;margin-bottom:8px">ครั้งที่ ${bossRound+1}/${BOSS_ROUNDS}</div>
+    <div class="boss-word">${q.word}</div>
+    ${q.pron ? '<div class="boss-pron">[ '+q.pron+' ]</div>' : ''}
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:4px">${btns}</div>
+    <div id="boss-rt" style="min-height:24px;font-size:14px;font-weight:600;margin-top:12px;text-align:center"></div>`;
+}
+
+function bossAnswer(btn, choice, correctAnswer) {
+  document.querySelectorAll('#boss-card .cbtn').forEach(b => {
+    b.disabled = true;
+    if(b.textContent === correctAnswer) b.classList.add('correct');
+  });
+  const ok = choice === correctAnswer;
+  const rt = document.getElementById('boss-rt');
+  if(ok) {
+    bossRound++;
+    rt.textContent = '✅ ถูก!'; rt.style.color = 'var(--gn)';
+    playOk();
+    if(bossRound >= BOSS_ROUNDS) {
+      setTimeout(bossVictory, 700);
+    } else {
+      setTimeout(renderBossQuestion, 900);
+    }
+  } else {
+    btn.classList.add('wrong');
+    rt.textContent = '❌ พลาด! เริ่มใหม่...'; rt.style.color = 'var(--rd)';
+    playNg();
+    bossRound = 0;
+    setTimeout(renderBossQuestion, 1200);
+  }
+}
+
+function bossVictory() {
+  // ลบออกจาก weak list
+  if(bossWord && st.ww[bossWord.word]) {
+    delete st.ww[bossWord.word];
+    saveSt();
+  }
+  const card = document.getElementById('boss-card');
+  card.innerHTML = `
+    <span class="boss-icon">&#127942;</span>
+    <div class="boss-title" style="color:var(--gn)">Boss Defeated!</div>
+    <div class="boss-sub" style="margin-bottom:20px">"${bossWord.word}" ถูกลบออกจากรายการคำยาก &#127881;</div>
+    <button class="boss-start" style="background:linear-gradient(135deg,var(--gn),#1e8449)" onclick="closeBoss()">&#127919; เล่นต่อ</button>`;
+  addXP(20);
+  [784,1047,1319].forEach((f,i)=>setTimeout(()=>pt(f,'sine',.2,.35),i*100));
+}
+
+function closeBoss() {
+  document.getElementById('boss-overlay').style.display = 'none';
+  bossActive = false;
+  bossWord = null;
+}
+
+updateDCBanner();
 updXP(); updPills(); loadQ(); renderChTabs(); renderTbl();
 
 </script>
